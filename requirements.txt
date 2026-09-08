@@ -1,0 +1,31 @@
+# --- Interfaz / App ---
+streamlit==1.38.0
+
+# --- Base de datos / ORM (PostgreSQL) ---
+SQLAlchemy==2.0.35
+psycopg2-binary==2.9.9   # driver de conexión a PostgreSQL
+alembic==1.13.3          # migraciones y versionado del esquema de BD
+
+# --- Manejo de datos ---
+pandas==2.2.3
+openpyxl==3.1.5          # leer/exportar Excel (útil para migrar datos históricos)
+
+# --- Dashboards / visualización ---
+plotly==5.24.1
+
+# --- Machine Learning / módulo predictivo ---
+scikit-learn==1.5.2
+joblib==1.4.2            # guardar/cargar el modelo entrenado (.pkl)
+
+# --- Autenticación / usuarios y roles ---
+bcrypt==4.2.0            # hash de contraseñas
+# streamlit-authenticator==0.3.3   # opcional: login listo para usar con Streamlit
+
+# --- Notificaciones automáticas ---
+APScheduler==3.10.4      # programar tareas (ej. revisar facturas vencidas)
+
+# --- Variables de entorno ---
+python-dotenv==1.0.1
+
+# --- Testing ---
+pytest==8.3.3
