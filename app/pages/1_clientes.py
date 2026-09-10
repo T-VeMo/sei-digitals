@@ -40,6 +40,6 @@ else:
         with col3:
             st.write(cliente["telefono"])
         with col4:
-            if st.button("Eliminar", key=f"eliminar_{i}"):
+            if st.button("❌", key=f"eliminar_{i}"):
                 st.session_state.clientes.pop(i)
                 st.rerun()
