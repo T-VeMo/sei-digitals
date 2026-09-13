@@ -159,7 +159,7 @@ streamlit run app/main.py
 ```
 
 ---
-##Crear nueva rama en Git
+## Crear nueva rama en Git
 - Asegurarse de estar en la rama (main o master) `git branch`
 - Actualizar tu repositorio con `git pull`
 - Escribe el siguiente comando para crear y cambiarte a la nueva rama la mismo tiempo: `git checkout -b nombre-de-tu-rama`
