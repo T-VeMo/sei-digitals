@@ -23,3 +23,4 @@ Usa el menú de la barra lateral para navegar entre los módulos:
 Clientes, Proveedores, Dashboards y más.
 """)
 st.caption("Proyecto APT — Ingeniería Informática, Duoc UC | Moisés Roa · Tomás Vega · Natanael Yáñez")
+

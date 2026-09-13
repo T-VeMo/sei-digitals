@@ -1,6 +1,7 @@
 import streamlit as st 
 
 st.title("📦 Gestión de Proveedores")
+st.sidebar.image("app/static/logo.png", width=100)
 
 if "proveedores" not in st.session_state:
     st.session_state.proveedores = [

@@ -1,6 +1,7 @@
 import streamlit as st
 
 st.title("👥 Gestión de Clientes")
+st.sidebar.image("app/static/logo.png", width=100)
 
 #ESTO GUARDA LA INFORMACIÓN DE LOS CLIENTES EN LA SESIÓN
 if "clientes" not in st.session_state:
