@@ -1,6 +1,8 @@
 import streamlit as st
 from utils import formato_clp
 
+opciones_estado = ["En progreso", "Finalizado", "Cancelado"]
+
 st.title("Proyectos")
 st.sidebar.image("app/static/logo.png", width=100)
 
@@ -24,7 +26,7 @@ with st.form("form_nuevo_proyecto", clear_on_submit=True):
     fecha_termino = st.date_input("Fecha estimada de término")
     costo_insumos = st.number_input("Costo de insumos", min_value=0)
     costo_mano_obra = st.number_input("Costo de mano de obra", min_value=0)
-    estado_proyecto = st.selectbox("Estado del proyecto", ["En progreso", "Finalizado", "Cancelado"])
+    estado_proyecto = st.selectbox("Estado del proyecto", opciones_estado)
 
     enviado = st.form_submit_button("Registrar proyecto")
 
@@ -49,23 +51,36 @@ st.subheader("Proyectos registrados")
 if len(st.session_state.proyectos) == 0:
     st.info("Aún no hay proyectos registrados")
 else:
+
     for i, proyecto in enumerate(st.session_state.proyectos):
-        col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([4, 3, 3, 3, 3, 3, 3, 1])
-        with col1:
-            st.write(proyecto["nombre"])
-        with col2:
-            st.write(proyecto["cliente"])
-        with col3:
-            st.write(proyecto["fecha_inicio"])
-        with col4:
-            st.write(proyecto["fecha_termino"])
-        with col5:
-            st.write(formato_clp(proyecto["costo_insumos"]))
-        with col6:
-            st.write(formato_clp(proyecto["costo_mano_obra"]))
-        with col7:
-            st.write(proyecto["estado"])
-        with col8:
-            if st.button("❌", key=f"eliminar_{i}"):
+        costo_total = proyecto["costo_insumos"] + proyecto["costo_mano_obra"]
+
+        with st.expander(f"📁 {proyecto['nombre']} — {proyecto['cliente']} — {proyecto['estado']} - {formato_clp(costo_total)}"):
+            with st.form(f"form_editar_{i}"):
+                nombre_edit = st.text_input("Nombre del proyecto", value=proyecto["nombre"])
+                cliente_edit = st.text_input("Cliente asociado", value=proyecto["cliente"])
+                costo_insumos_edit = st.number_input("Costo de insumos", min_value=0, value=proyecto["costo_insumos"])
+                costo_mano_obra_edit = st.number_input("Costo de mano de obra", min_value=0, value=proyecto["costo_mano_obra"])
+                estado_edit = st.selectbox(
+                    "Estado del proyecto",
+                    opciones_estado,
+                    index=opciones_estado.index(proyecto["estado"])
+                )
+
+                guardar = st.form_submit_button("Guardar cambios")
+
+                if guardar:
+                    if nombre_edit and cliente_edit:
+                        st.session_state.proyectos[i]["nombre"] = nombre_edit
+                        st.session_state.proyectos[i]["cliente"] = cliente_edit
+                        st.session_state.proyectos[i]["costo_insumos"] = costo_insumos_edit
+                        st.session_state.proyectos[i]["costo_mano_obra"] = costo_mano_obra_edit
+                        st.session_state.proyectos[i]["estado"] = estado_edit
+                        st.success("Proyecto actualizado exitosamente.")
+                        st.rerun()
+                    else:
+                        st.error("El nombre y el cliente del proyecto no pueden estar vacíos.")
+
+            if st.button("🗑️ Eliminar proyecto", key=f"eliminar_{i}"):
                 st.session_state.proyectos.pop(i)
-                st.rerun()
+                st.rerun() 
