@@ -1,8 +1,5 @@
 import streamlit as st
-
-#FUNCION PARA FORMATEAR EL MONTO A PESOS CHILENOS
-def formato_clp(monto):
-    return f"${monto:,.0f}".replace(",", ".")
+from utils import formato_clp
 
 st.title("Proyectos")
 st.sidebar.image("app/static/logo.png", width=100)
@@ -15,7 +12,7 @@ if "proyectos" not in st.session_state:
          "fecha_termino": "01/01/2028", 
          "costo_insumos": 1000000, 
          "costo_mano_obra": 2000000, 
-         "estado_del_proyecto": "En progreso"},
+         "estado": "En progreso"},
         ]
 
 st.subheader("Registro de proyectos")
@@ -40,7 +37,7 @@ with st.form("form_nuevo_proyecto", clear_on_submit=True):
                 "fecha_termino": fecha_termino.strftime("%d/%m/%Y"),
                 "costo_insumos": costo_insumos,
                 "costo_mano_obra": costo_mano_obra,
-                "estado_del_proyecto": estado_proyecto
+                "estado": estado_proyecto
             })
             st.success(f"Proyecto {nombre_proyecto} registrado exitosamente.")
         else:
@@ -67,7 +64,7 @@ else:
         with col6:
             st.write(formato_clp(proyecto["costo_mano_obra"]))
         with col7:
-            st.write(proyecto["estado_del_proyecto"])
+            st.write(proyecto["estado"])
         with col8:
             if st.button("❌", key=f"eliminar_{i}"):
                 st.session_state.proyectos.pop(i)
