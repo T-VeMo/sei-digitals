@@ -6,8 +6,12 @@ st.sidebar.image("app/static/logo.png", width=100)
 #ESTO GUARDA LA INFORMACIÓN DE LOS CLIENTES EN LA SESIÓN
 if "clientes" not in st.session_state:
     st.session_state.clientes = [
-        {"nombre": "Constructora Andes SpA", "email": "contacto@andes.cl", "telefono": "+56 9 1234 5678"},
-        {"nombre": "Inmobiliaria Costa Azul", "email": "contacto@costaazul.cl", "telefono": "+56 9 8765 4321"},
+        {"nombre": "Constructora Andes SpA", 
+         "email": "contacto@andes.cl", 
+         "telefono": "+56 9 1234 5678"},
+        {"nombre": "Inmobiliaria Costa Azul",
+          "email": "contacto@costaazul.cl",
+          "telefono": "+56 9 8765 4321"},
     ]
 
 st.subheader("Registrar nuevo cliente")
@@ -33,14 +37,24 @@ if len(st.session_state.clientes) == 0:
     st.info("Aún no hay clientes nuevos")
 else:
     for i, cliente in enumerate(st.session_state.clientes):
-        col1, col2, col3, col4 = st.columns([3, 3, 2, 1])
-        with col1:
-            st.write(cliente["nombre"])
-        with col2:
-            st.write(cliente["email"])  
-        with col3:
-            st.write(cliente["telefono"])
-        with col4:
-            if st.button("❌", key=f"eliminar_{i}"):
+
+        with st.expander(f" {cliente['nombre']} - {cliente['email']} - {cliente['telefono']}"):
+            with st.form(f"form_editar_{i}"):
+                nombre_edit = st.text_input("Nombre del cliente", value=cliente["nombre"])
+                email_edit = st.text_input("Correo electronico", value=cliente["email"])
+                telefono_edit = st.text_input("Teléfono", value=cliente["telefono"])
+
+                guardar = st.form_submit_button("Guardar cambios")
+
+                if guardar:
+                    if nombre_edit and email_edit and telefono_edit:
+                        st.session_state.clientes[i] ["nombre"] = nombre_edit
+                        st.session_state.clientes[i] ["email"] = email_edit
+                        st.session_state.clientes[i] ["telefono"] = telefono_edit
+                        st.success(f"Cliente {nombre_edit} actualizado exitosamente.")
+                    else:
+                        st.error("Por favor, complete todos los campos obligatorios.")
+
+            if st.button("🗑️ Eliminar proyecto", key=f"eliminar_{i}"):
                 st.session_state.clientes.pop(i)
                 st.rerun()
