@@ -16,6 +16,10 @@ if "proveedores" not in st.session_state:
          "categoria": "Plomería"},
     ]
 
+@st.dialog("Correo inválido")
+def mostrar_error_correo():
+    st.warning("Es necesario agregar el @ en el correo electrónico.")
+
 st.subheader("Registrar nuevo proveedor")
 
 with st.form("form_nuevo_proveedor", clear_on_submit=True):

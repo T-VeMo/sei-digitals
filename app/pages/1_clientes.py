@@ -15,6 +15,10 @@ if "clientes" not in st.session_state:
           "telefono": "+56987654321"},
     ]
 
+@st.dialog("Correo inválido")
+def mostrar_error_correo():
+    st.warning("Es necesario agregar el @ en el correo electrónico.")
+
 st.subheader("Registrar nuevo cliente")
 #FORMULARIO PARA REGISTRAR NUEVO CLIENTE
 with st.form("form_nuevo_cliente", clear_on_submit=True):
