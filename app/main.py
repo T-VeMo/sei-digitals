@@ -31,6 +31,7 @@ pagina = st.navigation([
     st.Page("pages/2_proveedores.py", title="Proveedores"),
     st.Page("pages/3_proyectos.py", title="Proyectos"),
     st.Page("pages/4_dashboard.py", title="Dashboard"),
+    st.Page("pages/5_prediccion_ia.py", title="Predicción IA"),
 ])
 pagina.run()
 
