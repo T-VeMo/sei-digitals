@@ -68,6 +68,7 @@ else:
                         st.session_state.clientes[i] ["email"] = email_edit
                         st.session_state.clientes[i] ["telefono"] = telefono_completo_edit
                         st.success(f"Cliente {nombre_edit} actualizado exitosamente.")
+                        st.rerun()
                     else:
                         st.error("Por favor, complete todos los campos obligatorios.")
 

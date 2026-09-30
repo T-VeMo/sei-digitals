@@ -60,9 +60,9 @@ else:
                 with col_prefijo:
                     st.text_input("prefijo", value="+569", disabled=True, label_visibility="collapsed", key=f"prefijo_edit_{i}")
                 with col_numero:
-                    telefono_edit = st.text_input("Número de telégono", value=telefono_sin_prefijo, max_chars=8, label_visibility="collapsed", key=f"numero_edit_{i}")
+                    telefono_edit = st.text_input("Número de teléfono", value=telefono_sin_prefijo, max_chars=8, label_visibility="collapsed", key=f"numero_edit_{i}")
 
-                Categoria_edit =st.text_input("Categoría", value=proveedor["categoria"])
+                categoria_edit =st.text_input("Categoría", value=proveedor["categoria"])
 
                 guardar = st.form_submit_button("Guardar cambios")
 
@@ -72,8 +72,9 @@ else:
                         st.session_state.proveedores[i] ["nombre"] = nombre_edit
                         st.session_state.proveedores[i] ["email"] = email_edit
                         st.session_state.proveedores[i] ["telefono"] = telefono_completo_edit
-                        st.session_state.proveedores[i] ["categoria"] = Categoria_edit
+                        st.session_state.proveedores[i] ["categoria"] = categoria_edit
                         st.success(f"Proveedor {nombre_edit} actualizado exitosamente.")
+                        st.rerun()
                     else:
                         st.error("Por favor, complete todos los campos obligatorios.")
 
