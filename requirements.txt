@@ -3,7 +3,7 @@ streamlit==1.38.0
 
 # --- Base de datos / ORM (PostgreSQL) ---
 SQLAlchemy==2.0.35
-psycopg2-binary==2.9.9   # driver de conexión a PostgreSQL
+psycopg2-binary==2.9.13   # driver de conexión a PostgreSQL
 alembic==1.13.3          # migraciones y versionado del esquema de BD
 
 # --- Manejo de datos ---

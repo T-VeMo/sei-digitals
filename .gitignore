@@ -9,3 +9,4 @@ ml/models/*.pkl
 Icon
 .vscode/
 .idea/
+*.pyc
