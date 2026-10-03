@@ -1,30 +1,49 @@
 import streamlit as st
-from database.connection import get_connection
 
-st.title("Prueba de PostgreSQL")
+from sqlalchemy import inspect, text
+
+from database.connection import engine
+
+
+st.title("Prueba de conexión a PostgreSQL")
+
 
 try:
-    conn = get_connection()
-    st.success("Conexión exitosa a PostgreSQL")
 
-    cursor = conn.cursor()
+    # PRUEBA DE CONEXIÓN
+    with engine.connect() as connection:
 
-    cursor.execute("""
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema = 'public'
-        ORDER BY table_name;
-    """)
+        resultado = connection.execute(
+            text("SELECT version();")
+        )
 
-    tablas = cursor.fetchall()
+        version = resultado.fetchone()[0]
 
-    st.subheader("Tablas de la base de datos")
+        st.success("Conexión exitosa a PostgreSQL")
 
-    for tabla in tablas:
-        st.write(tabla[0])
+        st.subheader("Versión de PostgreSQL")
 
-    cursor.close()
-    conn.close()
+        st.code(version)
+
+    # OBTENER TABLAS
+    inspector = inspect(engine)
+
+    tablas = inspector.get_table_names()
+
+    st.subheader("Tablas encontradas")
+
+    if tablas:
+
+        for tabla in tablas:
+            st.write(f"✓ {tabla}")
+
+    else:
+
+        st.warning("No se encontraron tablas.")
+
 
 except Exception as e:
-    st.error(f"Error: {e}")
+
+    st.error("No fue posible conectarse a PostgreSQL")
+
+    st.exception(e)
