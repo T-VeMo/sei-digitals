@@ -2,7 +2,7 @@ import streamlit as st
 
 from sqlalchemy import inspect, text
 
-from database.connection import engine
+from data.database.connection import engine
 
 
 st.title("Prueba de conexión a PostgreSQL")
