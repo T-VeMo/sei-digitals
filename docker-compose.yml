@@ -8,25 +8,3 @@ services:
     env_file:
       - .env
     command: streamlit run app/main.py --server.port=8501 --server.address=0.0.0.0
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: tomii
-      POSTGRES_PASSWORD: LA1s2d3f412.
-      POSTGRES_DB: sei_digitals
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tomii -d sei_digitals"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  pgdata:
