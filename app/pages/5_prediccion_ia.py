@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
-from sklearn.linear_model import LinearRegression
+from prophet import Prophet
 
 from utils import formato_clp
 
@@ -10,15 +10,17 @@ st.title("🔮 Módulo de IA Predictiva - Proyección de Ganancias (CLP)")
 st.sidebar.image("app/static/logo.png", width=100)
 st.write("Carga un Excel con las columnas `fecha` y `ganancias_clp`, o usa los datos de demostración.")
 
+
+
 archivo = st.file_uploader("Historial de ganancias (Excel)", type=["xlsx", "xls"])
 
 if archivo is None:
     generador = np.random.default_rng(42)
-    fechas = pd.date_range(end=pd.Timestamp.today().normalize(), periods=1000, freq="D")
-    tendencia = 500_000 + np.arange(1000) * 250
-    ganancias = tendencia + generador.normal(0, 60_000, size=1000)
+    fechas = pd.date_range(end=pd.Timestamp.today().normalize(), periods=100, freq="D")
+    tendencia = 500_000 + np.arange(100) * 250
+    ganancias = tendencia + generador.normal(0, 60_000, size=100)
     historico = pd.DataFrame({"fecha": fechas, "ganancias_clp": ganancias})
-    st.caption("Proyección basada en 1.000 registros diarios simulados.")
+    st.caption("Entrenamiento con 100 registros diarios ficticios.")
 else:
     try:
         historico = pd.read_excel(archivo)
@@ -37,31 +39,39 @@ else:
     historico["ganancias_clp"] = pd.to_numeric(historico["ganancias_clp"], errors="coerce")
     historico = historico.dropna().sort_values("fecha").reset_index(drop=True)
 
-if len(historico) < 2:
-    st.error("Se necesitan al menos dos registros válidos para entrenar el modelo.")
+if historico["fecha"].nunique() < 2:
+    st.error("Se necesitan al menos dos fechas distintas para entrenar el modelo.")
     st.stop()
 
-historico["periodo"] = (historico["fecha"] - historico["fecha"].min()).dt.total_seconds() / 86400
-variables = historico[["periodo"]]
-objetivo = historico["ganancias_clp"]
+st.caption(f"Registros válidos para entrenar: {len(historico)}.")
 
-modelo = LinearRegression()
-modelo.fit(variables, objetivo)
+datos_modelo = historico.rename(columns={"fecha": "ds", "ganancias_clp": "y"})
+modelo = Prophet()
+modelo.fit(datos_modelo[["ds", "y"]])
 
-frecuencia = pd.infer_freq(historico["fecha"])
+fechas_unicas = historico["fecha"].drop_duplicates().sort_values()
+frecuencia = pd.infer_freq(fechas_unicas) if len(fechas_unicas) >= 3 else None
 if frecuencia is None:
-    diferencias = historico["fecha"].sort_values().diff().dropna()
+    diferencias = fechas_unicas.diff().dropna()
     paso = diferencias.median()
     frecuencia = "MS" if paso >= pd.Timedelta(days=27) else "D"
 
-cantidad_periodos = 12 if frecuencia.startswith("M") else 30
-fecha_futura = pd.date_range(
+fecha_limite = historico["fecha"].max() + pd.DateOffset(months=1)
+periodos_en_un_mes = pd.date_range(
     start=historico["fecha"].max(),
-    periods=cantidad_periodos + 1,
+    end=fecha_limite,
     freq=frecuencia,
-)[1:]
-periodo_futuro = (fecha_futura - historico["fecha"].min()).total_seconds() / 86400
-predicciones = modelo.predict(pd.DataFrame({"periodo": periodo_futuro}))
+    inclusive="right",
+)
+cantidad_periodos = max(len(periodos_en_un_mes), 1)
+fechas_futuras = modelo.make_future_dataframe(
+    periods=cantidad_periodos,
+    freq=frecuencia,
+    include_history=False,
+)
+prediccion = modelo.predict(fechas_futuras)
+fecha_futura = prediccion["ds"]
+predicciones = prediccion["yhat"].to_numpy()
 
 grafico_historico = historico.set_index("fecha")["ganancias_clp"].rename("Histórico")
 grafico_prediccion = pd.Series(predicciones, index=fecha_futura, name="Proyección")
@@ -70,9 +80,8 @@ grafico = pd.concat([grafico_historico, grafico_prediccion], axis=1)
 st.subheader("Historial y proyección")
 st.line_chart(grafico, y=["Histórico", "Proyección"])
 
-unidad = "12 meses" if cantidad_periodos == 12 else "30 días"
 total_proyectado = predicciones.sum()
 st.metric(
-    label=f"Ganancia total proyectada ({unidad})",
+    label="Ganancia total proyectada para el próximo mes",
     value=f"{formato_clp(total_proyectado)} CLP",
 )

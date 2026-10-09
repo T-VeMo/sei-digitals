@@ -13,6 +13,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Prophet 1.1.7 bundles the compiled model but an incomplete CmdStan directory;
+# CmdStanPy rejects that directory before Prophet can load its bundled binary.
+RUN python -c "import shutil; from importlib.resources import files; shutil.rmtree(files('prophet') / 'stan_model' / 'cmdstan-2.33.1')"
+
 # 2) Copiar el resto del proyecto
 COPY . .
 

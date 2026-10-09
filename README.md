@@ -15,7 +15,7 @@ Proyecto APT — Asignatura Capstone, Ingeniería Informática, Duoc UC (Sede Vi
 - **Interfaz:** Streamlit
 - **Base de datos:** PostgreSQL (Supabase / Neon en el free tier)
 - **ORM / migraciones:** SQLAlchemy + Alembic
-- **Datos / ML:** pandas, scikit-learn
+- **Datos / ML:** pandas, Prophet
 - **Visualización:** Plotly
 
 ---
