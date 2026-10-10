@@ -9,8 +9,13 @@ def formato_clp(monto):
 def telefono_valido(telefono):
     return telefono.isdigit() and len(telefono) == 8
 
+# NORMALIZAR RUT AL FORMATO 12345678-K
 def normalizar_rut(rut):
-    return rut.strip().replace(".", "").replace("-", "").upper()
+    rut = rut.strip().replace(".", "").replace("-", "").upper()
+
+    if len(rut) < 2:
+        return rut
+
     return f"{rut[:-1]}-{rut[-1]}"
 
 def rut_valido(rut):
