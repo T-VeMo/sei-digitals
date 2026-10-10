@@ -174,6 +174,13 @@ class FacturaVenta(Base):
         Numeric(12),
         nullable=False
     )
+    
+    estado_pago: Mapped[str] = mapped_column(
+        String(10),
+        nullable=False,
+        default="Pendiente",
+        server_default="Pendiente",
+    )
 
     # Relaciones
     cliente: Mapped["Cliente"] = relationship(
@@ -228,6 +235,13 @@ class FacturaCompra(Base):
         Integer,
         ForeignKey("presupuesto.id_presupuesto"),
         nullable=True
+    )
+    
+    estado_pago: Mapped[str] = mapped_column(
+        String(10),
+        nullable=False,
+        default="Pendiente",
+        server_default="Pendiente",
     )
 
     # Relaciones
