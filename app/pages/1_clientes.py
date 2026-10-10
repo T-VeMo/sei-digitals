@@ -33,7 +33,7 @@ def obtener_clientes():
 
 st.subheader("Registrar nuevo cliente")
 
-with st.form("form_nuevo_cliente", clear_on_submit=True):
+with st.form("form_nuevo_cliente", clear_on_submit=False):
 
     rut = st.text_input(
         "RUT",

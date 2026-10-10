@@ -33,7 +33,7 @@ def obtener_proveedores():
 
 st.subheader("Registrar nuevo proveedor")
 
-with st.form("form_nuevo_proveedor", clear_on_submit=True):
+with st.form("form_nuevo_proveedor", clear_on_submit=False):
 
     rut = st.text_input(
         "RUT",
