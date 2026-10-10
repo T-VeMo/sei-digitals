@@ -118,11 +118,9 @@ proveedores_por_rut = {
     p.rut: p for p in proveedores
 }
 
-
 # ==========================================================
 # PESTAÑA 1: PROYECTOS
 # ==========================================================
-
 with tab_proyectos:
     st.subheader("Registrar proyecto")
 
@@ -585,6 +583,13 @@ with tab_facturacion:
                     value=0,
                     step=10000,
                 )
+                  
+                estado_pago_venta = st.selectbox(
+                    "Estado de pago",
+                    options=["Pendiente", "Pagada"],
+                    index=0,
+                )
+
 
                 iva_venta = calcular_iva(neto_venta)
                 total_venta = Decimal(str(neto_venta)) + iva_venta
@@ -622,6 +627,7 @@ with tab_facturacion:
                                         total_neto=neto_venta,
                                         iva=iva_venta,
                                         total=total_venta,
+                                        estado_pago=estado_pago_venta,
                                     )
                                     db.add(factura)
                                     db.commit()
@@ -657,6 +663,7 @@ with tab_facturacion:
                     st.write(f"**Neto:** {formato_clp(factura.total_neto)}")
                     st.write(f"**IVA:** {formato_clp(factura.iva)}")
                     st.write(f"**Total:** {formato_clp(factura.total)}")
+                    st.write(f"**Estado de pago:** {factura.estado_pago}")
 
     # ------------------------------------------------------
     # FACTURAS DE COMPRA
@@ -702,6 +709,12 @@ with tab_facturacion:
                     min_value=0,
                     value=0,
                     step=10000,
+                )
+                
+                estado_pago_compra = st.selectbox(
+                    "Estado de pago",
+                    options=["Pendiente", "Pagada"],
+                    index=0,
                 )
 
                 iva_compra = calcular_iva(neto_compra)
@@ -753,6 +766,7 @@ with tab_facturacion:
                                         iva=iva_compra,
                                         total=total_compra,
                                         id_presupuesto=presupuesto_compra,
+                                        estado_pago=estado_pago_compra,
                                     )
 
                                     db.add(factura)
@@ -793,6 +807,7 @@ with tab_facturacion:
                     st.write(f"**Neto:** {formato_clp(factura.total_neto)}")
                     st.write(f"**IVA:** {formato_clp(factura.iva)}")
                     st.write(f"**Total:** {formato_clp(factura.total)}")
+                    st.write(f"**Estado de pago:** {factura.estado_pago}")
                     st.write(
                         "**Presupuesto asociado:** "
                         + (
