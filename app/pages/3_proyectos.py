@@ -463,6 +463,11 @@ with tab_presupuesto:
         )
         st.write(f"**IVA (19 %):** {formato_clp(calculo['iva'])}")
         st.subheader(f"Total: {formato_clp(calculo['total'])}")
+        
+        st.write(
+            "**Estado de pago de la factura:** "
+            + (factura.estado_pago if factura else "Sin factura asociada")
+        )
 
         guardar_presupuesto = st.form_submit_button(
             "Guardar presupuesto",
