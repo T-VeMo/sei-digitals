@@ -2,6 +2,8 @@
 #************************
 
 # FUNCION PARA FORMATEAR EL MONTO A PESOS CHILENOS
+import re
+
 def formato_clp(monto):
     return f"${monto:,.0f}".replace(",", ".")
 
@@ -47,3 +49,10 @@ def rut_valido(rut):
         dv_calculado = str(resto)
 
     return dv == dv_calculado
+
+# VALIDAR CORREO ELECTRÓNICO
+def correo_valido(correo):
+    correo = correo.strip()
+    return bool(
+        re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", correo)
+    )
