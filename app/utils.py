@@ -18,15 +18,32 @@ def normalizar_rut(rut):
 
     return f"{rut[:-1]}-{rut[-1]}"
 
+# VALIDAR RUT CHILENO
 def rut_valido(rut):
-    rut = rut.strip().replace(".", "").replace("-", "")
+    rut = rut.strip().replace(".", "").replace("-", "").upper()
+
     if len(rut) < 2:
         return False
-    cuerpo, dv = rut[:-1], rut[-1].upper()
+
+    cuerpo, dv = rut[:-1], rut[-1]
+
     if not cuerpo.isdigit():
         return False
-    suma = sum(int(c) * (2 + i % 6) for i, c in enumerate(reversed(cuerpo)))
-    dv_calculado = str((11 - (suma % 11)) % 11)
-    if dv_calculado == "10":
+
+    suma = 0
+    factor = 2
+
+    for digito in reversed(cuerpo):
+        suma += int(digito) * factor
+        factor = 2 if factor == 7 else factor + 1
+
+    resto = 11 - (suma % 11)
+
+    if resto == 11:
+        dv_calculado = "0"
+    elif resto == 10:
         dv_calculado = "K"
+    else:
+        dv_calculado = str(resto)
+
     return dv == dv_calculado
