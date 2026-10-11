@@ -1,5 +1,7 @@
 import streamlit as st
-from utils import telefono_valido
+from utils import telefono_valido, normalizar_rut, rut_valido
+
+from core.clientes.service import listar_clientes, crear_cliente, actualizar_cliente, eliminar_cliente
 
 st.title("👥 Gestión de Clientes")
 st.sidebar.image("app/static/logo.png", width=100)
