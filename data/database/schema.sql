@@ -107,3 +107,17 @@ CREATE TABLE proyecto (
         FOREIGN KEY (nro_documento)
         REFERENCES factura_venta(nro_documento)
 );
+
+--------------------------------------------------------------
+-- AÑADIR ESTADO DE PAGO DE FACTURAS
+--------------------------------------------------------------
+
+ALTER TABLE factura_venta
+ADD COLUMN estado_pago VARCHAR(10)
+NOT NULL DEFAULT 'Pendiente'
+CHECK (estado_pago IN ('Pendiente', 'Pagada'));
+
+ALTER TABLE factura_compra
+ADD COLUMN estado_pago VARCHAR(10)
+NOT NULL DEFAULT 'Pendiente'
+CHECK (estado_pago IN ('Pendiente', 'Pagada'));
