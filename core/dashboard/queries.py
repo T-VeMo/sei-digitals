@@ -39,7 +39,7 @@ def ventas_por_cliente(limite=5):
     with SessionLocal() as db:
         filas = db.execute(consulta).all()
     df = pd.DataFrame(filas, columns = ["cliente", "ventas"])
-    df["ventas"] = df["ventas"].astype(_a_float)
+    df["ventas"] = df["ventas"].astype(float)
     return df
 
 def compras_por_proveedor(limite=5):
