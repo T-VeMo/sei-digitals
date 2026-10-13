@@ -1,4 +1,4 @@
-
+from sqlalchemy import select, func
 import streamlit as st
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
@@ -381,8 +381,25 @@ with tab_proyectos:
                                     "No fue posible actualizar el proyecto."
                                 )
 
+                st.divider()
+                st.markdown("#### Eliminar proyecto")
+
+                modo_eliminacion = st.radio(
+                    "¿Qué deseas eliminar?",
+                    options=[
+                        "Solo el proyecto",
+                        "Proyecto y registros relacionados",
+                    ],
+                    key=f"modo_eliminar_{proyecto.id_proyecto}",
+                    help=(
+                        "La segunda opción elimina también el presupuesto, "
+                        "la factura de venta y las facturas de compra "
+                        "asociadas al presupuesto."
+                    ),
+                )
+
                 confirmar = st.checkbox(
-                    "Confirmar eliminación",
+                    "Confirmo que deseo eliminar los registros seleccionados",
                     key=f"confirmar_eliminar_{proyecto.id_proyecto}",
                 )
 
@@ -391,23 +408,150 @@ with tab_proyectos:
                     key=f"eliminar_proyecto_{proyecto.id_proyecto}",
                     disabled=not confirmar,
                 ):
+                    motivo_bloqueo = None
+
                     try:
                         with SessionLocal() as db:
                             registro = db.get(
                                 Proyecto,
                                 proyecto.id_proyecto,
                             )
-                            if registro:
-                                db.delete(registro)
-                                db.commit()
 
-                        st.success("Proyecto eliminado.")
-                        st.rerun()
+                            if registro is None:
+                                motivo_bloqueo = (
+                                    "El proyecto ya no existe."
+                                )
+                            else:
+                                presupuesto_id = registro.id_presupuesto
+                                factura_id = registro.nro_documento
 
-                    except SQLAlchemyError:
+                                if (
+                                    modo_eliminacion
+                                    == "Proyecto y registros relacionados"
+                                ):
+                                    # Comprobar si el presupuesto
+                                    # está asociado a otro proyecto.
+                                    presupuesto_compartido = False
+
+                                    if presupuesto_id is not None:
+                                        presupuesto_compartido = (
+                                            db.query(Proyecto)
+                                            .filter(
+                                                Proyecto.id_proyecto
+                                                != registro.id_proyecto,
+                                                Proyecto.id_presupuesto
+                                                == presupuesto_id,
+                                            )
+                                            .first()
+                                            is not None
+                                        )
+
+                                    # Comprobar si la factura de venta
+                                    # está asociada a otro proyecto.
+                                    factura_compartida = False
+
+                                    if factura_id is not None:
+                                        factura_compartida = (
+                                            db.query(Proyecto)
+                                            .filter(
+                                                Proyecto.id_proyecto
+                                                != registro.id_proyecto,
+                                                Proyecto.nro_documento
+                                                == factura_id,
+                                            )
+                                            .first()
+                                            is not None
+                                        )
+
+                                    if presupuesto_compartido:
+                                        motivo_bloqueo = (
+                                            f"El presupuesto #{presupuesto_id} "
+                                            "está asociado a otro proyecto. "
+                                            "No se puede eliminar junto con "
+                                            "sus registros."
+                                        )
+
+                                    elif factura_compartida:
+                                        motivo_bloqueo = (
+                                            f"La factura de venta #{factura_id} "
+                                            "está asociada a otro proyecto. "
+                                            "No se puede eliminar junto con "
+                                            "sus registros."
+                                        )
+
+                                    else:
+                                        # Eliminar primero el proyecto
+                                        # para liberar sus referencias.
+                                        db.delete(registro)
+                                        db.flush()
+
+                                        # Eliminar facturas de compra
+                                        # vinculadas al presupuesto.
+                                        if presupuesto_id is not None:
+                                            compras_asociadas = (
+                                                db.query(FacturaCompra)
+                                                .filter(
+                                                    FacturaCompra.id_presupuesto
+                                                    == presupuesto_id
+                                                )
+                                                .all()
+                                            )
+
+                                            for compra in compras_asociadas:
+                                                db.delete(compra)
+
+                                        # Eliminar la factura de venta.
+                                        if factura_id is not None:
+                                            factura_venta = db.get(
+                                                FacturaVenta,
+                                                factura_id,
+                                            )
+
+                                            if factura_venta is not None:
+                                                db.delete(factura_venta)
+
+                                        # Eliminar el presupuesto.
+                                        if presupuesto_id is not None:
+                                            presupuesto_obj = db.get(
+                                                Presupuesto,
+                                                presupuesto_id,
+                                            )
+
+                                            if presupuesto_obj is not None:
+                                                db.delete(presupuesto_obj)
+
+                                        db.commit()
+
+                                else:
+                                    # Eliminar únicamente el proyecto.
+                                    db.delete(registro)
+                                    db.commit()
+
+                        if motivo_bloqueo:
+                            st.error(motivo_bloqueo)
+                        else:
+                            if (
+                                modo_eliminacion
+                                == "Proyecto y registros relacionados"
+                            ):
+                                st.success(
+                                    "Proyecto y registros relacionados "
+                                    "eliminados correctamente."
+                                )
+                            else:
+                                st.success(
+                                    "Proyecto eliminado. El presupuesto "
+                                    "y las facturas se conservaron."
+                                )
+
+                            st.rerun()
+
+                    except SQLAlchemyError as error:
                         st.error(
-                            "No fue posible eliminar el proyecto."
+                            "No fue posible completar la eliminación. "
+                            "Verifica las relaciones entre los registros."
                         )
+                        st.exception(error)
 
 
 # ==========================================================
@@ -464,11 +608,6 @@ with tab_presupuesto:
         st.write(f"**IVA (19 %):** {formato_clp(calculo['iva'])}")
         st.subheader(f"Total: {formato_clp(calculo['total'])}")
         
-        st.write(
-            "**Estado de pago de la factura:** "
-            + (factura.estado_pago if factura else "Sin factura asociada")
-        )
-
         guardar_presupuesto = st.form_submit_button(
             "Guardar presupuesto",
             type="primary",
@@ -535,7 +674,55 @@ with tab_presupuesto:
                 )
                 st.write(f"**IVA:** {formato_clp(presupuesto.iva)}")
                 st.write(f"**Total:** {formato_clp(presupuesto.total)}")
+            
+                st.divider()
 
+                confirmar_eliminacion = st.checkbox(
+                    "Confirmo que deseo eliminar este presupuesto",
+                    key=f"confirmar_presupuesto_{presupuesto.id_presupuesto}",
+                )
+
+                if st.button(
+                    "🗑️ Eliminar presupuesto",
+                    key=f"eliminar_presupuesto_{presupuesto.id_presupuesto}",
+                    disabled=not confirmar_eliminacion,
+                ):
+                    try:
+                        with SessionLocal() as db:
+                            registro = db.get(
+                                Presupuesto,
+                                presupuesto.id_presupuesto,
+                            )
+
+                            if registro:
+                                # Desvincular el presupuesto de proyectos.
+                                db.query(Proyecto).filter(
+                                    Proyecto.id_presupuesto
+                                    == presupuesto.id_presupuesto
+                                ).update(
+                                    {Proyecto.id_presupuesto: None},
+                                    synchronize_session=False,
+                                )
+
+                                # Desvincular facturas de compra.
+                                db.query(FacturaCompra).filter(
+                                    FacturaCompra.id_presupuesto
+                                    == presupuesto.id_presupuesto
+                                ).update(
+                                    {FacturaCompra.id_presupuesto: None},
+                                    synchronize_session=False,
+                                )
+
+                                db.delete(registro)
+                                db.commit()
+
+                        st.success("Presupuesto eliminado.")
+                        st.rerun()
+
+                    except SQLAlchemyError:
+                        st.error(
+                            "No fue posible eliminar el presupuesto."
+                        )
 
 # ==========================================================
 # PESTAÑA 3: FACTURACIÓN
@@ -594,7 +781,6 @@ with tab_facturacion:
                     options=["Pendiente", "Pagada"],
                     index=0,
                 )
-
 
                 iva_venta = calcular_iva(neto_venta)
                 total_venta = Decimal(str(neto_venta)) + iva_venta
@@ -669,6 +855,45 @@ with tab_facturacion:
                     st.write(f"**IVA:** {formato_clp(factura.iva)}")
                     st.write(f"**Total:** {formato_clp(factura.total)}")
                     st.write(f"**Estado de pago:** {factura.estado_pago}")
+                    st.divider()
+                    
+                    confirmar_eliminacion = st.checkbox(
+                        "Confirmo que deseo eliminar esta factura",
+                        key=f"confirmar_venta_{factura.nro_documento}",
+                    )
+                    
+                    if st.button(
+                        "🗑️ Eliminar factura de venta",
+                        key=f"eliminar_venta_{factura.nro_documento}",
+                        disabled=not confirmar_eliminacion,
+                    ):
+                        try:
+                            with SessionLocal() as db:
+                                registro = db.get(
+                                    FacturaVenta,
+                                    factura.nro_documento,
+                                )
+                    
+                                if registro:
+                                    # Conservar los proyectos, sin factura asociada.
+                                    db.query(Proyecto).filter(
+                                        Proyecto.nro_documento
+                                        == factura.nro_documento
+                                    ).update(
+                                        {Proyecto.nro_documento: None},
+                                        synchronize_session=False,
+                                    )
+                    
+                                    db.delete(registro)
+                                    db.commit()
+                    
+                            st.success("Factura de venta eliminada.")
+                            st.rerun()
+                    
+                        except SQLAlchemyError:
+                            st.error(
+                                "No fue posible eliminar la factura de venta."
+                            )
 
     # ------------------------------------------------------
     # FACTURAS DE COMPRA
@@ -806,6 +1031,7 @@ with tab_facturacion:
                 with st.expander(
                     f"Factura #{factura.nro_documento} — "
                     f"{nombre_proveedor} — {formato_clp(factura.total)}"
+                    
                 ):
                     st.write(f"**RUT proveedor:** {factura.rut_proveedor}")
                     st.write(f"**Fecha:** {factura.fecha_compra}")
@@ -821,3 +1047,33 @@ with tab_facturacion:
                             else "Sin asociar"
                         )
                     )
+                    st.divider()
+                    
+                    confirmar_eliminacion = st.checkbox(
+                        "Confirmo que deseo eliminar esta factura",
+                        key=f"confirmar_compra_{factura.nro_documento}",
+                    )
+                    
+                    if st.button(
+                        "🗑️ Eliminar factura de compra",
+                        key=f"eliminar_compra_{factura.nro_documento}",
+                        disabled=not confirmar_eliminacion,
+                    ):
+                        try:
+                            with SessionLocal() as db:
+                                registro = db.get(
+                                    FacturaCompra,
+                                    factura.nro_documento,
+                                )
+                    
+                                if registro:
+                                    db.delete(registro)
+                                    db.commit()
+                    
+                            st.success("Factura de compra eliminada.")
+                            st.rerun()
+                    
+                        except SQLAlchemyError:
+                            st.error(
+                                "No fue posible eliminar la factura de compra."
+                            )
