@@ -3,115 +3,60 @@ import pandas as pd
 import plotly.express as px
 from utils import formato_clp
 
+from core.dashboard.queries import (
+    obtener_kpis, ventas_por_cliente, compras_por_proveedor, facturas_por_estado
+)
+
+
 st.title("📊Dashboard")
 st.sidebar.image("app/static/logo.png", width=100)
 
 # ============================================
-# DATOS DE PRUEBA — reemplazar cuando existan los módulos reales
-# ============================================
-
-# TODO: reemplazar por datos reales de ventas cuando exista compras_ventas_facturacion.py
-ingresos_totales = 45000000
-costos_totales = sum(p["costo_insumos"] + p["costo_mano_obra"] for p in st.session_state.get("proyectos", []))
-ganancia_neta = ingresos_totales - costos_totales
-
-# TODO: reemplazar por conteo real de clientes registrados este mes
-nuevos_clientes_mes = 3
-
-# TODO: reemplazar por consulta real (suma de ventas por cliente)
-clientes_top_ventas = pd.DataFrame([
-    {"cliente": "Constructora Andes SpA", "ventas": 12000000},
-    {"cliente": "Inmobiliaria Costa Azul", "ventas": 9500000},
-    {"cliente": "Juan Pérez", "ventas": 7200000},
-])
-
-# TODO: reemplazar por conteo real de transacciones por proveedor
-proveedores_frecuentes = pd.DataFrame([
-    {"proveedor": "Proveedor A", "transacciones": 14},
-    {"proveedor": "Proveedor B", "transacciones": 9},
-])
-
-# TODO: reemplazar por conteo real de facturas pagadas/impagas
-facturas_estado = pd.DataFrame([
-    {"estado": "Pagadas", "cantidad": 22},
-    {"estado": "Impagas", "cantidad": 5},
-])
-
-# ============================================
 # FILA 1 — TARJETAS KPI
 # ============================================
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric(
-        label="Ganancia neta",
-        value=formato_clp(ganancia_neta),
-        delta=formato_clp(ganancia_neta - 3000000)  # comparado con un valor de referencia de prueba
-    )
-
-with col2:
-    st.metric(label="Nuevos clientes (mes)", value=nuevos_clientes_mes, delta=1)
-
-with col3:
-    st.metric(label="Total invertido en proyectos", value=formato_clp(costos_totales))
+kpis = obtener_kpis()
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Ingresos totales", formato_clp(kpis["ingresos"]))
+col2.metric("Ganancia neta", formato_clp(kpis["ganancia"]))
+col3.metric("Total de compras", formato_clp(kpis["costos"]))
+col4.metric("Clientes registrados", kpis["clientes"])
 
 st.divider()
 
 # ============================================
-# FILA 2 — PRECIO DE INSUMO VARIABLE (ejemplo)
+# FILA 2 — TOP Clientes
 # ============================================
 
-st.subheader("Insumos con precio variable")
+st.subheader("Clientes con mas ventas")
 
-col4, col5 = st.columns(2)
+df_clientes = ventas_por_cliente()
+if df_clientes.empty:
+    st.info("Aún no hay ventas registradas.")
+else:
+    fig_clientes = px.bar(df_clientes, x="cliente", y="ventas", title="Top clientes por ventas")
+    st.plotly_chart(fig_clientes, use_container_width=True)
 
-with col4:
-    st.metric(label="Cable eléctrico (por metro)", value=formato_clp(15000), delta=formato_clp(1500))
+# ============================================
+# FILA 3 — PROVEEDORES Y ESTADO DE FACTURAS
+# ============================================
+col5, col6 = st.columns(2)
 
 with col5:
-    st.metric(label="Cobre (por kg)", value=formato_clp(8200), delta=formato_clp(-300))
+    st.subheader("Proveedores")
+    df_proveedores = compras_por_proveedor()
+    if df_proveedores.empty:
+        st.info("Aún no hay compras registradas.")
+    else:
+        fig_proveedores = px.bar(df_proveedores, x="proveedor", y="transacciones",
+                                 title="Proveedores más frecuentes")
+        st.plotly_chart(fig_proveedores, use_container_width=True)
 
-st.divider()
-
-# ============================================
-# FILA 3 — GRÁFICOS DE PROYECTOS (datos reales, ya existentes)
-# ============================================
-
-st.subheader("Costos por proyecto")
-
-if len(st.session_state.get("proyectos", [])) > 0:
-    df_proyectos = pd.DataFrame(st.session_state.proyectos)
-    df_proyectos["costo_total"] = df_proyectos["costo_insumos"] + df_proyectos["costo_mano_obra"]
-
-    col6, col7 = st.columns(2)
-
-    with col6:
-        fig_barras = px.bar(df_proyectos, x="nombre", y="costo_total", title="Costo total por proyecto")
-        st.plotly_chart(fig_barras)
-
-    with col7:
-        fig_torta = px.pie(df_proyectos, names="estado", title="Proyectos por estado")
-        st.plotly_chart(fig_torta)
-else:
-    st.info("Aún no hay proyectos registrados para graficar.")
-
-st.divider()
-
-# ============================================
-# FILA 4 — GRÁFICOS CON DATOS DE PRUEBA (ventas, proveedores, facturas)
-# ============================================
-
-st.subheader("Clientes con más ventas")
-fig_clientes = px.bar(clientes_top_ventas, x="cliente", y="ventas", title="Top clientes por ventas")
-st.plotly_chart(fig_clientes)
-
-col8, col9 = st.columns(2)
-
-with col8:
-    fig_proveedores = px.bar(proveedores_frecuentes, x="proveedor", y="transacciones", title="Proveedores más frecuentes")
-    st.plotly_chart(fig_proveedores)
-
-with col9:
-    fig_facturas = px.pie(facturas_estado, names="estado", values="cantidad", title="Facturas: pagadas vs impagas")
-    st.plotly_chart(fig_facturas)
+with col6:
+    st.subheader("Facturas")
+    df_estado = facturas_por_estado()
+    if df_estado.empty:
+        st.info("Aún no hay facturas registradas.")
+    else:
+        fig_facturas = px.pie(df_estado, names="estado", values="cantidad",
+                              title="Facturas de venta: pagadas vs pendientes")
+        st.plotly_chart(fig_facturas, use_container_width=True)

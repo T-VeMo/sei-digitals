@@ -11,3 +11,5 @@ Icon
 .idea/
 .git/
 .gitignore
+docs/
+tests/
