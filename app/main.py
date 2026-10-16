@@ -34,11 +34,12 @@ Clientes, Proveedores, Dashboards y más.
 
 pagina = st.navigation([
     st.Page(pagina_principal, title="Main", default=True),
-    st.Page("pages/1_clientes.py", title="Clientes"),
-    st.Page("pages/2_proveedores.py", title="Proveedores"),
-    st.Page("pages/3_proyectos.py", title="Proyectos"),
-    st.Page("pages/4_dashboard.py", title="Dashboard"),
-    st.Page("pages/5_test_database.py", title="Test Database"),
+    st.Page("pages/1_Clientes.py", title="Clientes"),
+    st.Page("pages/2_Proveedores.py", title="Proveedores"),
+    st.Page("pages/3_Proyectos.py", title="Proyectos"),
+    st.Page("pages/4_Dashboard.py", title="Dashboard"),
+    st.Page("pages/5_Test_database.py", title="Test Database"),
+    st.Page("pages/6_IA_Predictiva.py", title="IA Predictiva"),
 ])
 pagina.run()
 

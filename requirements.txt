@@ -9,13 +9,16 @@ alembic==1.13.3          # migraciones y versionado del esquema de BD
 # --- Manejo de datos ---
 pandas==2.2.3
 openpyxl==3.1.5          # leer/exportar Excel (útil para migrar datos históricos)
+numpy<2.0.0
 
 # --- Dashboards / visualización ---
 plotly==5.24.1
+matplotlib==3.9.2
 
 # --- Machine Learning / módulo predictivo ---
 scikit-learn==1.5.2
 joblib==1.4.2            # guardar/cargar el modelo entrenado (.pkl)
+prophet==1.1.5                # pronóstico de series temporales
 
 # --- Autenticación / usuarios y roles ---
 bcrypt==4.2.0            # hash de contraseñas
