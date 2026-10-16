@@ -10,7 +10,7 @@ import streamlit as st
 st.set_page_config(page_title="FL SEI SpA", page_icon="⚡", layout="wide", initial_sidebar_state="auto", menu_items={
         'Get Help': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         'Report a bug': "https://www.extremelycoolapp.com/bug",
-        'About': "# Ñato scripts S.A."
+        'About': "# Gecko Script"
     })
 
 def pagina_principal():
