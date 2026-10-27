@@ -3,6 +3,20 @@
 --============================================================
 
 --------------------------------------------------------------
+-- TABLA: USUARIO
+--------------------------------------------------------------
+
+CREATE TABLE usuario(
+    id_usuario SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255),
+    rol VARCHAR(20) NOT NULL DEFAULT 'tecnico',
+    activo BOOLEAN NOT NULL DEFAULT false
+);
+
+
+--------------------------------------------------------------
 --TABLA: CLIENTE
 --------------------------------------------------------------
 

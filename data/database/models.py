@@ -6,12 +6,25 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Boolean,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 # BASE
 class Base(DeclarativeBase):
     pass
+
+#TABLA USUARIO
+class Usuario(Base):
+    __tablename__ = "usuario"
+
+    id_usuario: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String(100), nullable=False)
+    correo: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=False)
+    rol: Mapped[str] = mapped_column(String(20), nullable=False, default="tecnico", server_default="tecnico")
+    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+
 
 # TABLA CLIENTE
 class Cliente(Base):
