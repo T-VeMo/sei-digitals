@@ -5,6 +5,9 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
 
+import time
+from streamlit_cookies_controller import CookieController
+
 import streamlit as st
 
 st.set_page_config(page_title="FL SEI SpA", page_icon="⚡", layout="wide", initial_sidebar_state="auto", menu_items={
@@ -13,10 +16,21 @@ st.set_page_config(page_title="FL SEI SpA", page_icon="⚡", layout="wide", init
         'About': "# Gecko Script"
     })
 
-from core.auth.service import autenticar, crear_usuario
+from core.auth.service import (
+    autenticar, cerrar_sesion_token, crear_sesion, crear_usuario, usuario_desde_token,
+)
+
+COOKIE = "sei_token"
+DIAS_COOKIE = 7
+
+cookies = CookieController()
+
 
 if "usuario" not in st.session_state:
     st.session_state.usuario = None
+
+if st.session_state.usuario is None:
+    st.session_state.usuario = usuario_desde_token(st.context.cookies.get(COOKIE))
 
 def pagina_login():
     col1, col2 = st.columns([1, 15])
@@ -35,6 +49,11 @@ def pagina_login():
             if st.form_submit_button("Ingresar"):
                 usuario, mensaje = autenticar(correo, password)
                 if usuario:
+                    token = crear_sesion(usuario["id"])
+                    if token:
+                        st.session_state.token = token
+                        cookies.set(COOKIE, token, max_age=DIAS_COOKIE * 24 * 3600)
+                        time.sleep(1)  # da tiempo a que el navegador guarde la cookie
                     st.session_state.usuario = usuario
                     st.rerun()
                 else:
@@ -74,6 +93,11 @@ Clientes, Proveedores, Dashboards y más.
 
 
 def cerrar_sesion():
+    token = st.session_state.get("token") or st.context.cookies.get(COOKIE)
+    cerrar_sesion_token(token)  # invalida el token en la BD
+    cookies.remove(COOKIE)
+    time.sleep(1)
+    st.session_state.token = None
     st.session_state.usuario = None
     st.rerun()
 
@@ -91,6 +115,7 @@ else:
     ]
     if usuario["rol"] == "admin":
         paginas.append(st.Page("pages/5_test_database.py", title="Test Database"))
+        paginas.append(st.Page("pages/6_usuarios.py", title="Usuarios"))
 
     st.sidebar.write(f"👤 {usuario['nombre']} ({usuario['rol']})")
     if st.sidebar.button("Cerrar sesión"):
