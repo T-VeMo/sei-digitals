@@ -308,20 +308,44 @@ with tab_proyectos:
                 st.write("**Presupuestos asociados:**")
                 if presupuestos_proyecto:
                     for presupuesto in presupuestos_proyecto:
-                        st.write(
-                            f"- Presupuesto #{presupuesto.id_presupuesto}: "
-                            f"{formato_clp(presupuesto.total)}"
+                        st.markdown(
+                            f"**Presupuesto #{presupuesto.id_presupuesto}**"
                         )
+                        st.write(
+                            f"Total: {formato_clp(presupuesto.total)}"
+                        )
+
+                        # Buscar las facturas de compra del presupuesto.
+                        compras_presupuesto = [
+                            f for f in facturas_compra
+                            if f.id_presupuesto == presupuesto.id_presupuesto
+                        ]
+                        if compras_presupuesto:
+                            st.markdown("Facturas de compra:")
+
+                            for compra in compras_presupuesto:
+                                proveedor = proveedores_por_rut.get(
+                                    compra.rut_proveedor
+                                )
+
+                                nombre_proveedor = (
+                                    proveedor.razon_social
+                                    if proveedor
+                                    else compra.proveedor or compra.rut_proveedor
+                                )
+
+                                st.write(
+                                    f"- Factura #{compra.nro_documento} - "
+                                    f"{nombre_proveedor} - "
+                                    f"{formato_clp(compra.total)}"
+                                )
+                        else:
+                            st.caption("Sin facturas de compra asociadas.")
+
+                        st.divider()
+
                 else:
                     st.write("Sin presupuestos asociados.")
-
-                st.write("**Factura de venta:**")
-                if factura_venta:
-                    st.write(
-                        f"Factura #{factura_venta.nro_documento}"
-                    )
-                else:
-                    st.write("Sin factura de venta asociada.")
 
                 # ------------------------------------------
                 # EDITAR PROYECTO
