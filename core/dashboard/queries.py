@@ -31,7 +31,8 @@ def obtener_kpis():
 def ventas_por_cliente(limite=5):
     consulta = (
         select(Cliente.razon_social, func.sum(FacturaVenta.total).label("ventas"))
-        .join(FacturaVenta, FacturaVenta.rut_cliente == Cliente.rut)
+        .join(Proyecto, Proyecto.rut_cliente == Cliente.rut)
+        .join(FacturaVenta,FacturaVenta.id_proyecto == Proyecto.id_proyecto)
         .group_by(Cliente.razon_social)
         .order_by(func.sum(FacturaVenta.total).desc())
         .limit(limite)
