@@ -168,7 +168,7 @@ with tab_proyectos:
             "Gestión de Clientes antes de registrar un proyecto."
         )
     else:
-        with st.form("form_nuevo_proyecto", clear_on_submit=True):
+        with st.form("form_nuevo_proyecto", clear_on_submit=False):
             cliente_rut = st.selectbox(
                 "Cliente",
                 options=list(clientes_por_rut.keys()),
@@ -560,7 +560,40 @@ with tab_proyectos:
                             "Verifica las relaciones entre los registros."
                         )
                         st.exception(error)
+                        
+        st.divider()
+        st.subheader("Facturas de compra sin proyecto asociado")
 
+        compras_independientes = [
+            factura for factura in facturas_compra
+            if factura.id_presupuesto is None
+        ]
+
+        if compras_independientes:
+            for factura in compras_independientes:
+                proveedor = proveedores_por_rut.get(
+                    factura.rut_proveedor
+                )
+
+                nombre_proveedor = (
+                    proveedor.razon_social
+                    if proveedor
+                    else factura.proveedor or factura.rut_proveedor
+                )
+
+                st.markdown(
+                    f"**Factura #{factura.nro_documento}** — "
+                    f"{nombre_proveedor}"
+                )
+
+                st.write(f"**RUT:** {factura.rut_proveedor}")
+                st.write(f"**Fecha:** {factura.fecha_compra}")
+                st.write(f"**Total neto:** {formato_clp(factura.total_neto)}")
+                st.write(f"**IVA:** {formato_clp(factura.iva)}")
+                st.write(f"**Total:** {formato_clp(factura.total)}")
+                st.write(f"**Estado de pago:** {factura.estado_pago}")
+
+                st.divider()
 # ==========================================================
 # PESTAÑA 2: PRESUPUESTOS
 # ==========================================================
@@ -573,7 +606,7 @@ with tab_presupuesto:
             "un presupuesto."
         )
     else:
-        with st.form("form_nuevo_presupuesto", clear_on_submit=True):
+        with st.form("form_nuevo_presupuesto", clear_on_submit=False):
             proyecto_id = st.selectbox(
             "Proyecto asociado",
             options=list(proyectos_por_id.keys()),
@@ -805,7 +838,7 @@ with tab_facturacion:
                 "una factura de venta asociada."
             )
         else:
-            with st.form("form_factura_venta", clear_on_submit=True):
+            with st.form("form_factura_venta", clear_on_submit=False):
                 nro_venta = st.number_input(
                     "Número de documento",
                     min_value=1,
@@ -1041,7 +1074,7 @@ with tab_facturacion:
                 p.id_presupuesto for p in presupuestos
             ]
 
-            with st.form("form_factura_compra", clear_on_submit=True):
+            with st.form("form_factura_compra", clear_on_submit=False):
                 nro_compra = st.number_input(
                     "Número de documento",
                     min_value=1,
