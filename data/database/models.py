@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy import (
     Date,
@@ -6,12 +6,39 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Boolean,
+    DateTime,
+    UniqueConstraint,
+    Text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 # BASE
 class Base(DeclarativeBase):
     pass
+
+#TABLA USUARIO
+class Usuario(Base):
+    __tablename__ = "usuario"
+
+    id_usuario: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String(100), nullable=False)
+    correo: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=True)
+    rol: Mapped[str] = mapped_column(String(20), nullable=False, default="tecnico", server_default="tecnico")
+    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+
+
+# TABLA SESION
+class Sesion (Base):
+    __tablename__ = "sesion"
+
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    id_usuario: Mapped[int] = mapped_column(
+        Integer, ForeignKey("usuario.id_usuario", ondelete="CASCADE"), nullable=False
+    )
+    expira: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
 
 # TABLA CLIENTE
 class Cliente(Base):
@@ -43,9 +70,9 @@ class Cliente(Base):
     )
 
     # Relaciones
-    facturas_venta: Mapped[list["FacturaVenta"]] = relationship(
-        back_populates="cliente"
-    )
+    proyectos: Mapped[list["Proyecto"]] = relationship(
+    back_populates="cliente"
+)
 
 # TABLA PROVEEDOR
 class Proveedor(Base):
@@ -89,6 +116,12 @@ class Presupuesto(Base):
         Integer,
         primary_key=True,
         autoincrement=True
+    )
+    
+    id_proyecto: Mapped[int] = mapped_column(
+    Integer,
+    ForeignKey("proyecto.id_proyecto"),
+    nullable=False
     )
 
     total_mo: Mapped[float] = mapped_column(
@@ -136,23 +169,24 @@ class Presupuesto(Base):
         back_populates="presupuesto"
     )
 
-    proyectos: Mapped[list["Proyecto"]] = relationship(
-        back_populates="presupuesto"
-    )
+    proyecto: Mapped["Proyecto"] = relationship(
+    back_populates="presupuestos"
+)
 
 # TABLA FACTURA_VENTA
 class FacturaVenta(Base):
     __tablename__ = "factura_venta"
+        
+    __table_args__ = (
+        UniqueConstraint(
+            "id_proyecto",
+            name="uq_factura_venta_proyecto"
+        ),
+    )
 
     nro_documento: Mapped[int] = mapped_column(
         Integer,
         primary_key=True
-    )
-
-    rut_cliente: Mapped[str] = mapped_column(
-        String(12),
-        ForeignKey("cliente.rut"),
-        nullable=False
     )
 
     fecha_emision: Mapped[date] = mapped_column(
@@ -183,11 +217,13 @@ class FacturaVenta(Base):
     )
 
     # Relaciones
-    cliente: Mapped["Cliente"] = relationship(
-        back_populates="facturas_venta"
+    id_proyecto: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("proyecto.id_proyecto"),
+        nullable=False
     )
 
-    proyectos: Mapped[list["Proyecto"]] = relationship(
+    proyecto: Mapped["Proyecto"] = relationship(
         back_populates="factura_venta"
     )
 
@@ -253,6 +289,7 @@ class FacturaCompra(Base):
         back_populates="facturas_compra"
     )
 
+
 # TABLA PROYECTO
 class Proyecto(Base):
     __tablename__ = "proyecto"
@@ -262,22 +299,20 @@ class Proyecto(Base):
         primary_key=True,
         autoincrement=True
     )
+    
+    nombre: Mapped[str] = mapped_column(String(150), nullable=False)
+    
+    descripcion: Mapped[str] = mapped_column(Text, nullable=False)
+
+    rut_cliente: Mapped[str] = mapped_column(
+        String(12),
+        ForeignKey("cliente.rut"),
+        nullable=False
+    )
 
     costo_total: Mapped[float] = mapped_column(
         Numeric(12),
         nullable=False
-    )
-
-    id_presupuesto: Mapped[int | None] = mapped_column(
-        Integer,
-        ForeignKey("presupuesto.id_presupuesto"),
-        nullable=True
-    )
-
-    nro_documento: Mapped[int | None] = mapped_column(
-        Integer,
-        ForeignKey("factura_venta.nro_documento"),
-        nullable=True
     )
 
     fecha_inicio: Mapped[date | None] = mapped_column(
@@ -290,11 +325,15 @@ class Proyecto(Base):
         nullable=True
     )
 
-    # Relaciones
-    presupuesto: Mapped["Presupuesto | None"] = relationship(
+    cliente: Mapped["Cliente"] = relationship(
         back_populates="proyectos"
     )
 
+    presupuestos: Mapped[list["Presupuesto"]] = relationship(
+        back_populates="proyecto"
+    )
+
     factura_venta: Mapped["FacturaVenta | None"] = relationship(
-        back_populates="proyectos"
+        back_populates="proyecto",
+        uselist=False
     )

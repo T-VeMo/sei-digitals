@@ -32,3 +32,6 @@ python-dotenv==1.0.1
 
 # --- Testing ---
 pytest==8.3.3
+
+# -- cookies --
+streamlit-cookies-controller==0.0.4

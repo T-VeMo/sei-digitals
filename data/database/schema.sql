@@ -3,6 +3,20 @@
 --============================================================
 
 --------------------------------------------------------------
+-- TABLA: USUARIO
+--------------------------------------------------------------
+
+CREATE TABLE usuario(
+    id_usuario SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255),
+    rol VARCHAR(20) NOT NULL DEFAULT 'tecnico',
+    activo BOOLEAN NOT NULL DEFAULT false
+);
+
+
+--------------------------------------------------------------
 --TABLA: CLIENTE
 --------------------------------------------------------------
 
@@ -121,3 +135,14 @@ ALTER TABLE factura_compra
 ADD COLUMN estado_pago VARCHAR(10)
 NOT NULL DEFAULT 'Pendiente'
 CHECK (estado_pago IN ('Pendiente', 'Pagada'));
+
+
+--------------------------------------------------------------
+-- TABLA PARA MANTENER SESION EN NAVEGADOR
+--------------------------------------------------------------
+
+CREATE TABLE sesion (
+    token_hash VARCHAR(64) PRIMARY KEY,
+    id_usuario INTEGER NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    expira TIMESTAMPTZ NOT NULL
+);
