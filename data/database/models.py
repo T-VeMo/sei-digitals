@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     UniqueConstraint,
+    Text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -298,6 +299,10 @@ class Proyecto(Base):
         primary_key=True,
         autoincrement=True
     )
+    
+    nombre: Mapped[str] = mapped_column(String(150), nullable=False)
+    
+    descripcion: Mapped[str] = mapped_column(Text, nullable=False)
 
     rut_cliente: Mapped[str] = mapped_column(
         String(12),
