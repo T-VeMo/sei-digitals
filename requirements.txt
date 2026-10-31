@@ -19,6 +19,7 @@ matplotlib==3.9.2
 scikit-learn==1.5.2
 joblib==1.4.2            # guardar/cargar el modelo entrenado (.pkl)
 prophet==1.1.5                # pronóstico de series temporales
+cmdstanpy==1.2.4
 
 # --- Autenticación / usuarios y roles ---
 bcrypt==4.2.0            # hash de contraseñas

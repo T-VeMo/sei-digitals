@@ -112,7 +112,6 @@ else:
     st.Page("pages/2_Proveedores.py", title="Proveedores"),
     st.Page("pages/3_Proyectos.py", title="Proyectos"),
     st.Page("pages/4_Dashboard.py", title="Dashboard"),
-    st.Page("pages/5_Test_database.py", title="Test Database"),
     st.Page("pages/7_IA_Predictiva.py", title="IA Predictiva"),
 ]
     if usuario["rol"] == "admin":
