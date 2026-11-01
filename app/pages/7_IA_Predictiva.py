@@ -89,7 +89,6 @@ if st.button("🚀 Generar Predicción con IA", type="primary"):
         except Exception as e:
             st.error(f"Ocurrió un error al procesar el modelo: {e}")
 
-# Gráfico (se muestra si ya hay un forecast calculado)
 if st.session_state.forecast_completo is not None:
     fig, ax = plt.subplots(figsize=(10, 5))
     st.session_state.model.plot(st.session_state.forecast_completo, ax=ax)
@@ -99,3 +98,20 @@ if st.session_state.forecast_completo is not None:
     st.pyplot(fig)
     plt.close(fig)
 
+st.divider()
+st.subheader("Asistente IA - Consultas sobre el Pronostico")
+st.markdown("Preguntale al asistente sobre las tendencias o el flujo de ventas basado en el pronóstico generado por Prophet.")
+
+if prompt := st.chat_input("Ej: ¿Cómo se ve el flujo de ventas en los próximos 5 días?"):
+    # Guarda y muestra la pregunta del usuario
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+# Consulta a Gemini con los datos del pronóstico
+    with st.chat_message("assistant"):
+        with st.spinner("Analizando el pronóstico..."):
+            respuesta = responder_con_ia(prompt)
+        st.markdown(respuesta)
+
+    st.session_state.messages.append({"role": "assistant", "content": respuesta})
