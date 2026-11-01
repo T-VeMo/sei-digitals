@@ -20,6 +20,7 @@ scikit-learn==1.5.2
 joblib==1.4.2            # guardar/cargar el modelo entrenado (.pkl)
 prophet==1.1.5                # pronóstico de series temporales
 cmdstanpy==1.2.4
+google-genai==2.34.0          # para usar el modelo de lenguaje de Google Gemini para respuestas mas inteligentes
 
 # --- Autenticación / usuarios y roles ---
 bcrypt==4.2.0            # hash de contraseñas
