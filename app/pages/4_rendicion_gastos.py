@@ -133,16 +133,89 @@ with SessionLocal() as db:
                 f"${total_anual:,.0f}".replace(",", ".")
             )
 
-            datos = [
-                {
-                    "Mes": nombres_meses[r.mes],
-                    "Monto total": f"${r.monto_total:,.0f}".replace(",", ".")
-                }
-                for r in rendiciones_anio
-            ]
+            for r in rendiciones_anio:
 
-            st.dataframe(
-                datos,
-                use_container_width=True,
-                hide_index=True
-            )
+                with st.expander(
+                    f"{nombres_meses[r.mes]} — ${r.monto_total:,.0f}".replace(",", ".")
+                ):
+
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        nuevo_monto = st.number_input(
+                            "Monto total ($)",
+                            min_value=1,
+                            value=int(r.monto_total),
+                            step=1000,
+                            key=f"monto_{r.id_rendicion}"
+                        )
+
+                        if st.button(
+                            "Guardar cambios",
+                            key=f"editar_{r.id_rendicion}",
+                            use_container_width=True
+                        ):
+                            with SessionLocal() as db:
+                                rendicion = db.get(
+                                    RendicionGastos,
+                                    r.id_rendicion
+                                )
+
+                                if rendicion:
+                                    rendicion.monto_total = nuevo_monto
+                                    db.commit()
+                                    st.success("Rendición actualizada.")
+                                    st.rerun()
+
+                    with col2:
+                        if st.button(
+                            "Eliminar rendición",
+                            key=f"eliminar_{r.id_rendicion}",
+                            type="secondary",
+                            use_container_width=True
+                        ):
+                            st.session_state[f"confirmar_eliminar_{r.id_rendicion}"] = True
+
+                    if st.session_state.get(f"confirmar_eliminar_{r.id_rendicion}", False):
+
+                        st.warning(
+                            f"¿Estás seguro de eliminar la rendición de "
+                            f"{nombres_meses[r.mes]} de {r.anio}?"
+                        )
+
+                        col_confirmar, col_cancelar = st.columns(2)
+
+                        with col_confirmar:
+                            if st.button(
+                                "Sí, eliminar",
+                                key=f"confirmar_{r.id_rendicion}",
+                                type="primary",
+                                use_container_width=True
+                            ):
+                                with SessionLocal() as db:
+                                    rendicion = db.get(
+                                        RendicionGastos,
+                                        r.id_rendicion
+                                    )
+
+                                    if rendicion:
+                                        db.delete(rendicion)
+                                        db.commit()
+
+                                st.session_state.pop(
+                                    f"confirmar_eliminar_{r.id_rendicion}",
+                                    None
+                                )
+                                st.rerun()
+
+                        with col_cancelar:
+                            if st.button(
+                                "Cancelar",
+                                key=f"cancelar_{r.id_rendicion}",
+                                use_container_width=True
+                            ):
+                                st.session_state.pop(
+                                    f"confirmar_eliminar_{r.id_rendicion}",
+                                    None
+                                )
+                                st.rerun()
