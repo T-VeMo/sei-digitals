@@ -41,7 +41,7 @@ with st.form("form_rendicion_gastos"):
         anio = st.number_input(
             "Año",
             min_value=2000,
-            max_value=2100,
+            max_value=date.today().year,
             value=date.today().year,
             step=1
         )
