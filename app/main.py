@@ -115,6 +115,7 @@ else:
     st.Page("pages/1_clientes.py", title="Clientes"),
     st.Page("pages/2_proveedores.py", title="Proveedores"),
     st.Page("pages/3_proyectos.py", title="Proyectos"),
+    st.Page("pages/4_rendicion_gastos.py", title="Rendición de Gastos"),
     st.Page("pages/4_dashboard.py", title="Dashboard"),
     ]
     if usuario["rol"] == "admin":
