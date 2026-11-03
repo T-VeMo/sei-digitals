@@ -1015,6 +1015,118 @@ with tab_facturacion:
                     )
 
                     st.divider()
+                    st.markdown("##### Modificar factura")
+
+                    with st.form(
+                        f"form_editar_venta_{factura.nro_documento}"
+                    ):
+                        nuevo_nro = st.number_input(
+                            "Número de documento",
+                            min_value=1,
+                            value=int(factura.nro_documento),
+                            step=1,
+                            key=f"editar_nro_venta_{factura.nro_documento}",
+                        )
+
+                        proyectos_disponibles = [
+                            p.id_proyecto for p in proyectos
+                        ]
+
+                        nuevo_proyecto = st.selectbox(
+                            "Proyecto asociado",
+                            options=proyectos_disponibles,
+                            index=proyectos_disponibles.index(
+                                factura.id_proyecto
+                            ),
+                            format_func=etiqueta_proyecto,
+                            key=f"editar_proyecto_venta_{factura.nro_documento}",
+                        )
+
+                        nueva_fecha = st.date_input(
+                            "Fecha de emisión",
+                            value=factura.fecha_emision,
+                            key=f"editar_fecha_venta_{factura.nro_documento}",
+                        )
+
+                        nuevo_neto = st.number_input(
+                            "Total neto ($)",
+                            min_value=0,
+                            value=int(factura.total_neto),
+                            step=10000,
+                            key=f"editar_neto_venta_{factura.nro_documento}",
+                        )
+
+                        nuevo_estado = st.selectbox(
+                            "Estado de pago",
+                            options=["Pendiente", "Pagada"],
+                            index=["Pendiente", "Pagada"].index(
+                                factura.estado_pago
+                            ),
+                            key=f"editar_estado_venta_{factura.nro_documento}",
+                        )
+
+                        nuevo_iva = calcular_iva(nuevo_neto)
+                        nuevo_total = Decimal(str(nuevo_neto)) + nuevo_iva
+
+                        st.write(f"**IVA (19 %):** {formato_clp(nuevo_iva)}")
+                        st.write(f"**Total:** {formato_clp(nuevo_total)}")
+
+                        guardar_cambios = st.form_submit_button(
+                            "💾 Guardar modificaciones",
+                            type="primary",
+                        )
+
+                        if guardar_cambios:
+                            if nuevo_nro <= 0 or nuevo_neto <= 0:
+                                st.error(
+                                    "El número de documento y el neto "
+                                    "deben ser mayores que cero."
+                                )
+                            else:
+                                try:
+                                    with SessionLocal() as db:
+                                        registro = db.get(
+                                            FacturaVenta,
+                                            factura.nro_documento,
+                                        )
+
+                                        numero_existente = db.get(
+                                            FacturaVenta,
+                                            int(nuevo_nro),
+                                        )
+
+                                        if (
+                                            numero_existente
+                                            and int(nuevo_nro) != factura.nro_documento
+                                        ):
+                                            st.error(
+                                                "Ya existe otra factura con ese número."
+                                            )
+                                        elif registro is None:
+                                            st.error("La factura ya no existe.")
+                                        else:
+                                            registro.nro_documento = int(nuevo_nro)
+                                            registro.id_proyecto = nuevo_proyecto
+                                            registro.fecha_emision = nueva_fecha
+                                            registro.total_neto = nuevo_neto
+                                            registro.iva = nuevo_iva
+                                            registro.total = nuevo_total
+                                            registro.estado_pago = nuevo_estado
+
+                                            db.commit()
+
+                                            st.success(
+                                                "Factura de venta modificada correctamente."
+                                            )
+                                            st.rerun()
+
+                                except SQLAlchemyError as error:
+                                    st.error(
+                                        "No fue posible modificar la factura de venta."
+                                    )
+                                    st.exception(error)
+
+                    st.divider()
 
                     confirmar_eliminacion = st.checkbox(
                         "Confirmo que deseo eliminar esta factura",
