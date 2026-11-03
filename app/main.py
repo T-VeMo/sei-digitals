@@ -16,6 +16,9 @@ st.set_page_config(page_title="FL SEI SpA", page_icon="⚡", layout="wide", init
         'About': "# Gecko Script"
     })
 
+from app.notificaciones import mostrar_campanita
+from data.database.connection import engine
+
 from core.auth.service import (
     autenticar, cerrar_sesion_token, crear_sesion, crear_usuario, usuario_desde_token,
 )
@@ -107,6 +110,7 @@ if usuario is None:
     pagina = st.navigation([st.Page(pagina_login, title="Ingresar", default=True)])
 else:
     paginas = [
+        
     st.Page(pagina_principal, title="Main", default=True),
     st.Page("pages/1_clientes.py", title="Clientes"),
     st.Page("pages/2_proveedores.py", title="Proveedores"),
@@ -121,4 +125,5 @@ else:
     if st.sidebar.button("Cerrar sesión"):
         cerrar_sesion()
     pagina = st.navigation(paginas)
+    mostrar_campanita(engine)
 pagina.run()
