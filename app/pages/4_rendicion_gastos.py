@@ -92,3 +92,57 @@ with st.form("form_rendicion_gastos"):
                     st.error(
                         "Ya existe una rendición para ese período."
                     )
+                    
+                    st.divider()
+
+st.subheader("Historial de rendiciones")
+
+with SessionLocal() as db:
+    rendiciones = db.scalars(
+        select(RendicionGastos).order_by(
+            RendicionGastos.anio.desc(),
+            RendicionGastos.mes.asc()
+        )
+    ).all()
+
+    if not rendiciones:
+        st.info("Todavía no existen rendiciones registradas.")
+
+    else:
+        nombres_meses = {v: k for k, v in meses.items()}
+
+        anios = sorted(
+            {rendicion.anio for rendicion in rendiciones},
+            reverse=True
+        )
+
+        for anio_historial in anios:
+            st.markdown(f"### {anio_historial}")
+
+            rendiciones_anio = [
+                r for r in rendiciones
+                if r.anio == anio_historial
+            ]
+
+            total_anual = sum(
+                r.monto_total for r in rendiciones_anio
+            )
+
+            st.metric(
+                "Total de gastos del año",
+                f"${total_anual:,.0f}".replace(",", ".")
+            )
+
+            datos = [
+                {
+                    "Mes": nombres_meses[r.mes],
+                    "Monto total": f"${r.monto_total:,.0f}".replace(",", ".")
+                }
+                for r in rendiciones_anio
+            ]
+
+            st.dataframe(
+                datos,
+                use_container_width=True,
+                hide_index=True
+            )
