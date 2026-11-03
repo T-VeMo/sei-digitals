@@ -189,3 +189,13 @@ Convenciones de nombres de rama:
 | Moisés Roa | Base de datos, backend, requerimientos |
 | Tomás Vega | Frontend, dashboards |
 | Natanael Yáñez | Modelo predictivo (IA), pruebas, despliegue |
+
+---
+
+## 🇬🇧 English summary
+
+**SEI Digitals** is a web platform built for an electrical services company to manage clients, suppliers, projects, supplies, purchases, sales and invoicing, with financial dashboards and a predictive AI module for profit forecasting. Capstone project for the Computer Engineering program at Duoc UC (Chile), built by a team of three using Git feature branches and pull requests.
+
+**Stack:** Python 3.12 · Streamlit · PostgreSQL (Supabase / Neon) · SQLAlchemy + Alembic · pandas · scikit-learn · Plotly · Docker
+
+**Team:** Moisés Roa (database and backend) · Tomás Vega (frontend and dashboards) · Natanael Yáñez (predictive model, testing and deployment)
