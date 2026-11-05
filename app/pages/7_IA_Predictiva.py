@@ -6,12 +6,18 @@ import matplotlib.pyplot as plt
 from prophet import Prophet
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
+from openai import OpenAI
 import streamlit as st
 
 load_dotenv()
 
 HORIZONTE_DIAS = 30
 
+SYSTEM_BASE = """Eres el asistente de análisis de SEI Digitals, plataforma de facturación de FL Servicios Eléctricos Integrales SpA.
+Respondes en español claro y breve.
+Responde SOLO con los datos entregados. Si la pregunta pide algo que no está en los datos, dilo y explica qué sí puedes mostrar.
+Para rangos de días (por ejemplo "los próximos 5 días"), usa el detalle día a día, suma o promedia solo esos días y muestra el cálculo.
+Si la pregunta no tiene que ver con ventas o el pronóstico, responde en una frase y vuelve al tema."""
 
 @st.cache_resource
 def get_engine():
@@ -60,6 +66,64 @@ def entrenar_prophet(df):
 
     return model, forecast, forecast_futuro
 
+def construir_contexto(futuro, historial):
+    total = futuro["yhat"].sum()
+    promedio = futuro["yhat"].mean()
+    fila_max = futuro.loc[futuro["yhat"].idxmax()]
+    fila_min = futuro.loc[futuro["yhat"].idxmin()]
+
+    diario = "\n".join(
+        f"{r.ds:%Y-%m-%d}: ${r.yhat:,.0f} (rango ${r.yhat_lower:,.0f} a ${r.yhat_upper:,.0f})"
+        for r in futuro.itertuples()
+    )
+    mensual = historial.set_index("ds")["y"].resample("MS").sum().tail(6)
+    hist = "\n".join(f"{f:%Y-%m}: ${v:,.0f}" for f, v in mensual.items())
+
+    return f"""Pronóstico Prophet para los próximos {HORIZONTE_DIAS} días:
+- Total proyectado: ${total:,.0f}
+- Promedio diario: ${promedio:,.0f}
+- Día más alto: {fila_max.ds:%Y-%m-%d} con ${fila_max.yhat:,.0f}
+- Día más bajo: {fila_min.ds:%Y-%m-%d} con ${fila_min.yhat:,.0f}
+
+Detalle día a día:
+{diario}
+
+Facturación real de los últimos meses:
+{hist}"""
+
+def responder_con_openrouter(prompt, contexto, historial):
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        return "⚠️ Falta OPENROUTER_API_KEY en el .env."
+
+    client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
+
+    mensajes = [{"role": "system", "content": f"{SYSTEM_BASE}\n\nDATOS:\n{contexto}"}]
+    mensajes += historial
+    mensajes.append({"role": "user", "content": prompt})
+
+    try:
+        resp = client.chat.completions.create(
+            model="nvidia/nemotron-3.5-super-vl:free",
+            messages=mensajes,
+            max_tokens=2000,
+        )
+        return resp.choices[0].message.content
+    except Exception as e:
+        return f"⚠️ No pude consultar al modelo: {e}"
+
+def responder_con_ia(prompt):
+    futuro = st.session_state.forecast_futuro
+    if futuro is None or futuro.empty:
+        return "⚠️ Primero genera la predicción con el botón superior para que pueda analizar los datos."
+
+    contexto = construir_contexto(futuro, st.session_state.df_hist)
+    historial = [
+        {"role": m["role"], "content": m["content"]}
+        for m in st.session_state.messages[-10:]
+        if m["role"] in ("user", "assistant")
+    ]
+    return responder_con_openrouter(prompt, contexto, historial)
 
 # --- INTERFAZ ---
 st.title("Módulo de IA Predictiva")
@@ -81,6 +145,7 @@ if st.button("🚀 Generar Predicción con IA", type="primary"):
             df = cargar_historial()
             model, forecast, forecast_futuro = entrenar_prophet(df)
 
+            st.session_state.df_hist = df
             st.session_state.model = model
             st.session_state.forecast_completo = forecast
             st.session_state.forecast_futuro = forecast_futuro
@@ -102,13 +167,15 @@ st.divider()
 st.subheader("Asistente IA - Consultas sobre el Pronostico")
 st.markdown("Preguntale al asistente sobre las tendencias o el flujo de ventas basado en el pronóstico generado por Prophet.")
 
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
 if prompt := st.chat_input("Ej: ¿Cómo se ve el flujo de ventas en los próximos 5 días?"):
-    # Guarda y muestra la pregunta del usuario
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-# Consulta a Gemini con los datos del pronóstico
     with st.chat_message("assistant"):
         with st.spinner("Analizando el pronóstico..."):
             respuesta = responder_con_ia(prompt)
