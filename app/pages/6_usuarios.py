@@ -1,6 +1,6 @@
 import streamlit as st
 
-from core.auth.service import actualizar_usuario, listar_usuarios
+from core.auth.service import actualizar_usuario, listar_usuarios, eliminar_usuario
 
 yo = st.session_state.get("usuario")
 if not yo or yo["rol"] != "admin":
@@ -17,6 +17,10 @@ def cambiar_rol(id_usuario: int, clave: str):
     ok, mensaje = actualizar_usuario(id_usuario, rol=st.session_state[clave])
     st.toast(mensaje, icon="✅" if ok else "⚠️")
 
+def borrar_usuario(id_usuario: int):
+    ok, mensaje = eliminar_usuario(id_usuario)
+    st.toast(mensaje, icon="✅" if ok else "⚠️")
+
 usuarios = listar_usuarios()
 pendientes = [u for u in usuarios if not u["activo"]]
 
@@ -26,13 +30,13 @@ col2.metric("Pendientes de activación", len(pendientes))
 
 st.divider()
 
-encabezados = st.columns([3, 4, 2, 2, 2])
-for col, texto in zip(encabezados, ["Nombre", "Correo", "Rol", "Estado", "Acción"]):
+encabezados = st.columns([3, 4, 2, 2, 2, 2])
+for col, texto in zip(encabezados, ["Nombre", "Correo", "Rol", "Estado", "Acción", "Eliminar"]):
     col.markdown(f"**{texto}**")
 
 for u in usuarios:
     es_yo = u["id"] == yo["id"]
-    c1, c2, c3, c4, c5 = st.columns([3, 4, 2, 2, 2])
+    c1, c2, c3, c4, c5, c6 = st.columns([3, 4, 2, 2, 2, 2])
 
     c1.write(u["nombre"] + (" (tú)" if es_yo else ""))
     c2.write(u["correo"])
@@ -52,3 +56,9 @@ for u in usuarios:
         key=f"estado_{u['id']}", disabled=es_yo,
         on_click=cambiar_estado, args=(u["id"], not u["activo"]),
     )
+    with c6.popover("🗑️", disabled=es_yo):
+        st.warning(f"Eliminar al usuario **{u['nombre']}**? Esta acción no se puede deshacer.")
+        st.button(
+            "Sí, eliminar", key=f"eliminar_{u['id']}", type="primary",
+            on_click=borrar_usuario, args=(u["id"],),
+        )
