@@ -57,8 +57,8 @@ for u in usuarios:
         on_click=cambiar_estado, args=(u["id"], not u["activo"]),
     )
     with c6.popover("🗑️", disabled=es_yo):
-        st.warning(f"Eliminar al usuariio **{u['nombre']}**? Esta acción no se puede deshacer.")
+        st.warning(f"Eliminar al usuario **{u['nombre']}**? Esta acción no se puede deshacer.")
         st.button(
-            "Si, eliminar", key=f"eliminar_{u['id']}", type="primary",
+            "Sí, eliminar", key=f"eliminar_{u['id']}", type="primary",
             on_click=borrar_usuario, args=(u["id"],),
         )

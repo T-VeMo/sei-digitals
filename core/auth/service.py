@@ -144,7 +144,7 @@ def actualizar_usuario(id_usuario: int, activo=None, rol=None):
 
 
 def eliminar_usuario(id_usuario: int):
-    try: 
+    try:
         with SessionLocal() as db:
             u = db.get(Usuario, id_usuario)
             if not u:
@@ -163,6 +163,6 @@ def eliminar_usuario(id_usuario: int):
             db.execute(delete(Sesion).where(Sesion.id_usuario == id_usuario))
             db.delete(u)
             db.commit()
-            return True, f"Cuenta de {nombre} ha sido eliminado."
+            return True, f"La cuenta de {nombre} ha sido eliminada."
     except SQLAlchemyError:
-        return False, "No se pudo eliminar el cuenta."
+        return False, "No se pudo eliminar la cuenta."
