@@ -141,3 +141,28 @@ def actualizar_usuario(id_usuario: int, activo=None, rol=None):
             return True, f"Usuario {u.nombre} actualizado."
     except SQLAlchemyError:
         return False, "No se pudo actualizar el usuario."
+
+
+def eliminar_usuario(id_usuario: int):
+    try: 
+        with SessionLocal() as db:
+            u = db.get(Usuario, id_usuario)
+            if not u:
+                return False, "El usuario no existe."
+
+            if u.activo and u.rol == "admin":
+                otros = db.scalar(
+                    select(func.count()).select_from(Usuario).where(
+                        Usuario.rol == "admin", Usuario.activo.is_(True),
+                        Usuario.id_usuario != id_usuario)
+                )
+                if not otros:
+                    return False, "Debe quedar al menos un administrador activo."
+
+            nombre = u.nombre
+            db.execute(delete(Sesion).where(Sesion.id_usuario == id_usuario))
+            db.delete(u)
+            db.commit()
+            return True, f"Cuenta de {nombre} ha sido eliminado."
+    except SQLAlchemyError:
+        return False, "No se pudo eliminar el cuenta."
