@@ -6,7 +6,7 @@ venv/
 .streamlit/secrets.toml
 ml/models/*.pkl
 .DS_Store
-Icon
+Icon?
 .vscode/
 .idea/
 *.pyc
