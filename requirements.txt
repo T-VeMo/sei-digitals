@@ -9,7 +9,7 @@ alembic==1.13.3          # migraciones y versionado del esquema de BD
 # --- Manejo de datos ---
 pandas==2.2.3
 openpyxl==3.1.5          # leer/exportar Excel (útil para migrar datos históricos)
-numpy<2.0.0
+numpy==1.26.4
 
 # --- Dashboards / visualización ---
 plotly==5.24.1
