@@ -94,7 +94,7 @@ Facturación real de los últimos meses:
 def responder_con_openrouter(prompt, contexto, historial):
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        return "⚠️ Falta OPENROUTER_API_KEY en el .env."
+        return "Falta OPENROUTER_API_KEY en el .env."
 
     client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
 
@@ -110,12 +110,12 @@ def responder_con_openrouter(prompt, contexto, historial):
         )
         return resp.choices[0].message.content
     except Exception as e:
-        return f"⚠️ No pude consultar al modelo: {e}"
+        return f"No pude consultar al modelo: {e}"
 
 def responder_con_ia(prompt):
     futuro = st.session_state.forecast_futuro
     if futuro is None or futuro.empty:
-        return "⚠️ Primero genera la predicción con el botón superior para que pueda analizar los datos."
+        return "Primero genera la predicción con el botón superior para que pueda analizar los datos."
 
     contexto = construir_contexto(futuro, st.session_state.df_hist)
     historial = [
