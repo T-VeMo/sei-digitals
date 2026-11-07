@@ -28,7 +28,7 @@ def mostrar_campanita(engine):
     etiqueta = f"🔔{cantidad}" if cantidad else "🔔"
 
     # Columna angosta a la derecha para que la campana quede arriba a la derecha
-    _, col = st.columns([0.85, 0.15])
+    _, col = st.columns([0.80, 0.15])
     with col:
         with st.popover(etiqueta):
             st.markdown("**Facturas pendientes de pago**")

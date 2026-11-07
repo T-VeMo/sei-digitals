@@ -337,3 +337,36 @@ class Proyecto(Base):
         back_populates="proyecto",
         uselist=False
     )
+    
+# TABLA RENDICION DE GASTOS
+class RendicionGastos(Base):
+    __tablename__ = "rendicion_gastos"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "mes",
+            "anio",
+            name="uq_rendicion_gastos_mes_anio"
+        ),
+    )
+
+    id_rendicion: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    mes: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False
+    )
+
+    anio: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False
+    )
+
+    monto_total: Mapped[float] = mapped_column(
+        Numeric(12),
+        nullable=False
+    )

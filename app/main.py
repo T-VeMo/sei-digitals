@@ -110,12 +110,12 @@ if usuario is None:
     pagina = st.navigation([st.Page(pagina_login, title="Ingresar", default=True)])
 else:
     paginas = [
-        
     st.Page(pagina_principal, title="Main", default=True),
-    st.Page("pages/1_Clientes.py", title="Clientes"),
-    st.Page("pages/2_Proveedores.py", title="Proveedores"),
-    st.Page("pages/3_Proyectos.py", title="Proyectos"),
-    st.Page("pages/4_Dashboard.py", title="Dashboard"),
+    st.Page("pages/1_clientes.py", title="Clientes"),
+    st.Page("pages/2_proveedores.py", title="Proveedores"),
+    st.Page("pages/3_proyectos.py", title="Proyectos"),
+    st.Page("pages/4_dashboard.py", title="Dashboard"),
+    st.Page("pages/4_rendicion_gastos.py", title="Rendición de Gastos"),
     st.Page("pages/7_IA_Predictiva.py", title="IA Predictiva"),
 ]
     if usuario["rol"] == "admin":
