@@ -1,4 +1,5 @@
 import os
+import json
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
@@ -7,17 +8,20 @@ from prophet import Prophet
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 from openai import OpenAI
+from datetime import date
 import streamlit as st
 
 load_dotenv()
 
 HORIZONTE_DIAS = 30
 
-SYSTEM_BASE = """Eres el asistente de análisis de SEI Digitals, plataforma de facturación de FL Servicios Eléctricos Integrales SpA.
-Respondes en español claro y breve.
-Responde SOLO con los datos entregados. Si la pregunta pide algo que no está en los datos, dilo y explica qué sí puedes mostrar.
-Para rangos de días (por ejemplo "los próximos 5 días"), usa el detalle día a día, suma o promedia solo esos días y muestra el cálculo.
-Si la pregunta no tiene que ver con ventas o el pronóstico, responde en una frase y vuelve al tema."""
+SYSTEM_BASE = """Eres el asistente de negocio de SEI Digitals, plataforma de FL Servicios Eléctricos Integrales SpA.
+Respondes en español chileno, claro y breve. Los montos son en pesos chilenos (CLP).
+Para preguntas del pronóstico usa la sección DATOS: los totales ya vienen calculados, NO sumes tú.
+# AQUÍ VA (NUEVO): la siguiente línea
+En DATOS está el contenido de las tablas tal cual. Cuando pidan facturas u otros registros, muéstralos con el nombre de la tabla, número de documento, fecha y monto, sin inventar nada.
+Si lo que piden no está en los datos, dilo tal cual.
+Si la pregunta no tiene que ver con el negocio, responde en una frase y vuelve al tema."""
 
 @st.cache_resource
 def get_engine():
@@ -66,6 +70,20 @@ def entrenar_prophet(df):
 
     return model, forecast, forecast_futuro
 
+TABLAS_IA = ["cliente", "proveedor", "proyecto", "presupuesto", "factura_venta", "factura_compra"]
+
+@st.cache_data(ttl=60)
+def leer_tablas(limite=100):
+    bloques = []
+    with get_engine().connect() as conn:
+        for tabla in TABLAS_IA:
+            try:
+                df = pd.read_sql_query(text(f"SELECT * FROM {tabla} LIMIT :n"), con=conn, params={"n": limite})
+                bloques.append(f"TABLA {tabla} ({len(df)} filas):\n" + df.to_csv(index=False))
+            except Exception as e:
+                bloques.append(f"TABLA {tabla}: no se pudo leer ({e})")
+    return "\n".join(bloques)
+
 def construir_contexto(futuro, historial):
     total = futuro["yhat"].sum()
     promedio = futuro["yhat"].mean()
@@ -89,7 +107,10 @@ Detalle día a día:
 {diario}
 
 Facturación real de los últimos meses:
-{hist}"""
+{hist}
+
+CONTENIDO DE LA BASE DE DATOS (tal cual):
+{leer_tablas()}"""
 
 def responder_con_openrouter(prompt, contexto, historial):
     api_key = os.getenv("OPENROUTER_API_KEY")
