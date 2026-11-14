@@ -135,16 +135,20 @@ def responder_con_openrouter(prompt, contexto, historial):
 
 def responder_con_ia(prompt):
     futuro = st.session_state.forecast_futuro
-    if futuro is None or futuro.empty:
-        return "Primero genera la predicción con el botón superior para que pueda analizar los datos."
+    hay_pronostico = (futuro is not None and not futuro.empty and st.session_state.df_hist is not None)
 
-    contexto = construir_contexto(futuro, st.session_state.df_hist)
+    if not hay_pronostico:
+        contexto = (
+            "Aun no se ha generado el pronostico. Si preguntan por proyecciones o ventas"
+            "futuras, pídeles que presionen el botón de Generar Predicción con IA"
+        )
     historial = [
         {"role": m["role"], "content": m["content"]}
         for m in st.session_state.messages[-10:]
         if m["role"] in ("user", "assistant")
     ]
     return responder_con_openrouter(prompt, contexto, historial)
+    return responder_con_sql(prompt, contexto, historial)
 
 # --- INTERFAZ ---
 st.title("Módulo de IA Predictiva")
