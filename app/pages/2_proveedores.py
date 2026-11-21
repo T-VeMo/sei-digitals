@@ -1,4 +1,3 @@
-
 import streamlit as st
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -79,29 +78,22 @@ with st.form("form_nuevo_proveedor", clear_on_submit=False):
     if enviado:
 
         rut_normalizado = normalizar_rut(rut)
-
-        if (
-            not rut.strip()
-            or not razon_social.strip()
-            or not correo.strip()
-            or not telefono.strip()
-        ):
+    
+        if not rut.strip() or not razon_social.strip():
             st.error(
-                "Complete los campos obligatorios: "
-                "RUT, razón social, correo y teléfono."
+                "Complete los campos obligatorios: RUT y razón social."
             )
 
         elif not rut_valido(rut_normalizado):
             st.error("El RUT ingresado no es válido.")
 
-        elif not correo_valido(correo):
+        elif correo.strip() and not correo_valido(correo):
             st.error("Ingrese un correo electrónico válido.")
 
-        elif not telefono_valido(telefono):
+        elif telefono.strip() and not telefono_valido(telefono):
             st.error(
                 "Ingrese los 8 dígitos del número móvil después de +569."
             )
-
         else:
             try:
                 with SessionLocal() as db:
@@ -117,13 +109,15 @@ with st.form("form_nuevo_proveedor", clear_on_submit=False):
                         )
 
                     else:
+                        
                         nuevo_proveedor = Proveedor(
                             rut=rut_normalizado,
                             razon_social=razon_social.strip(),
                             rubro=rubro.strip() or None,
-                            correo=correo.strip(),
-                            telefono=f"+569{telefono}"
+                            correo=correo.strip() or None,
+                            telefono=f"+569{telefono}" if telefono.strip() else None
                         )
+
 
                         db.add(nuevo_proveedor)
                         db.commit()
