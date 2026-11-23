@@ -127,7 +127,7 @@ with st.form("form_nuevo_cliente", clear_on_submit=False):
                             "registrado exitosamente."
                         )
 
-                        st.rerun()
+                    st.rerun()
 
             except IntegrityError:
                 st.error(

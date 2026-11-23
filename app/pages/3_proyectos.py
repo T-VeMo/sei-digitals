@@ -423,6 +423,8 @@ with tab_proyectos:
                                             "El proyecto ya no existe."
                                         )
                                     else:
+                                        registro.nombre = nombre_edit.strip()
+                                        registro.descripcion = descripcion_edit.strip()
                                         registro.fecha_inicio = inicio_edit
                                         registro.fecha_termino = termino_edit
                                         registro.costo_total = costo_edit
