@@ -270,13 +270,10 @@ with tab_proyectos:
                 if p.id_proyecto == proyecto.id_proyecto
             ]
 
-            factura_venta = next(
-                (
-                    f for f in facturas_venta
-                    if f.id_proyecto == proyecto.id_proyecto
-                ),
-                None,
-            )
+            facturas_proyecto = [
+                f for f in facturas_venta
+                if f.id_proyecto == proyecto.id_proyecto
+            ]
 
             with st.expander(
                 f"Proyecto #{proyecto.id_proyecto} — "
@@ -346,6 +343,18 @@ with tab_proyectos:
 
                 else:
                     st.write("Sin presupuestos asociados.")
+                
+                st.write("**Facturas de venta asociadas:**")
+
+                if facturas_proyecto:
+                    for factura in facturas_proyecto:
+                        st.write(
+                            f"- Factura #{factura.nro_documento} — "
+                            f"{formato_clp(factura.total)} — "
+                            f"{factura.estado_pago}"
+                        )
+                else:
+                    st.caption("Sin facturas de venta asociadas.")
 
                 # ------------------------------------------
                 # EDITAR PROYECTO
@@ -456,7 +465,7 @@ with tab_proyectos:
                     key=f"modo_eliminar_{proyecto.id_proyecto}",
                     help=(
                         "La segunda opción elimina el proyecto, sus "
-                        "presupuestos, la factura de venta asociada "
+                        "presupuestos, las factura de venta asociadas "
                         "y las facturas de compra vinculadas a esos "
                         "presupuestos."
                     ),
@@ -817,27 +826,10 @@ with tab_facturacion:
     with tab_ventas:
         st.markdown("#### Registrar factura de venta")
 
-        # Un proyecto solo puede tener una factura de venta.
-        proyectos_facturados = {
-            factura.id_proyecto
-            for factura in facturas_venta
-        }
-
-        proyectos_disponibles_venta = [
-            proyecto
-            for proyecto in proyectos
-            if proyecto.id_proyecto not in proyectos_facturados
-        ]
-
         if not proyectos:
             st.warning(
                 "Primero debes registrar un proyecto en la "
                 "pestaña Gestión de Proyectos."
-            )
-        elif not proyectos_disponibles_venta:
-            st.info(
-                "Todos los proyectos registrados ya tienen "
-                "una factura de venta asociada."
             )
         else:
             with st.form("form_factura_venta", clear_on_submit=False):
@@ -852,7 +844,7 @@ with tab_facturacion:
                     "Proyecto asociado",
                     options=[
                         p.id_proyecto
-                        for p in proyectos_disponibles_venta
+                        for p in proyectos
                     ],
                     format_func=etiqueta_proyecto,
                 )
@@ -909,13 +901,6 @@ with tab_facturacion:
                                     proyecto_venta_id,
                                 )
 
-                                factura_proyecto = db.scalars(
-                                    select(FacturaVenta).where(
-                                        FacturaVenta.id_proyecto
-                                        == proyecto_venta_id
-                                    )
-                                ).first()
-
                                 if factura_existente:
                                     st.error(
                                         "Ya existe una factura de venta "
@@ -925,11 +910,6 @@ with tab_facturacion:
                                     st.error(
                                         "El proyecto seleccionado "
                                         "ya no existe."
-                                    )
-                                elif factura_proyecto:
-                                    st.error(
-                                        "El proyecto ya tiene una "
-                                        "factura de venta asociada."
                                     )
                                 else:
                                     factura = FacturaVenta(
@@ -941,7 +921,6 @@ with tab_facturacion:
                                         total=total_venta,
                                         estado_pago=estado_pago_venta,
                                     )
-
                                     db.add(factura)
                                     db.commit()
 

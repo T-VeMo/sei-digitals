@@ -177,13 +177,6 @@ class Presupuesto(Base):
 class FacturaVenta(Base):
     __tablename__ = "factura_venta"
         
-    __table_args__ = (
-        UniqueConstraint(
-            "id_proyecto",
-            name="uq_factura_venta_proyecto"
-        ),
-    )
-
     nro_documento: Mapped[int] = mapped_column(
         Integer,
         primary_key=True
@@ -333,9 +326,8 @@ class Proyecto(Base):
         back_populates="proyecto"
     )
 
-    factura_venta: Mapped["FacturaVenta | None"] = relationship(
-        back_populates="proyecto",
-        uselist=False
+    facturas_venta: Mapped[list["FacturaVenta"]] = relationship(
+        back_populates="proyecto"
     )
     
 # TABLA RENDICION DE GASTOS
