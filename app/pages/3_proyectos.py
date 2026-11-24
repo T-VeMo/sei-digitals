@@ -200,11 +200,22 @@ with tab_proyectos:
             )
 
             costo_total = st.number_input(
-                "Costo total estimado ($)",
+                "Costo neto del proyecto ($)",
                 min_value=0,
                 value=0,
                 step=10000,
             )
+
+            iva_proyecto = int(
+                (Decimal(str(costo_total)) * Decimal("0.19"))
+                .quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+            )
+
+            total_bruto = costo_total + iva_proyecto
+
+            st.write(f"**Neto:** {formato_clp(costo_total)}")
+            st.write(f"**IVA (19 %):** {formato_clp(iva_proyecto)}")
+            st.write(f"**Total bruto:** {formato_clp(total_bruto)}")
 
             registrar = st.form_submit_button(
                 "Registrar proyecto",
@@ -275,6 +286,13 @@ with tab_proyectos:
                 if f.id_proyecto == proyecto.id_proyecto
             ]
 
+            iva_proyecto = int(
+                (Decimal(str(proyecto.costo_total)) * Decimal("0.19"))
+                .quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+            )
+
+            bruto_proyecto = proyecto.costo_total + iva_proyecto
+
             with st.expander(
                 f"Proyecto #{proyecto.id_proyecto} — "
                 f"{proyecto.nombre} — "
@@ -301,6 +319,12 @@ with tab_proyectos:
                     f"**Fecha de término:** "
                     f"{proyecto.fecha_termino or 'No registrada'}"
                 )
+                st.divider()
+                st.markdown("**Resumen económico del proyecto**")
+
+                st.write(f"Neto: {formato_clp(proyecto.costo_total)}")
+                st.write(f"IVA (19 %): {formato_clp(iva_proyecto)}")
+                st.write(f"Total bruto: {formato_clp(bruto_proyecto)}")
 
                 st.write("**Presupuestos asociados:**")
                 if presupuestos_proyecto:
@@ -308,17 +332,18 @@ with tab_proyectos:
                         st.markdown(
                             f"**Presupuesto #{presupuesto.id_presupuesto}**"
                         )
-                        st.write(
-                            f"Total: {formato_clp(presupuesto.total)}"
-                        )
+                        st.write(f"Total neto: {formato_clp(presupuesto.subtotal_neto)}")
+                        st.write(f"IVA (19 %): {formato_clp(presupuesto.iva)}")
+                        st.write(f"Total bruto: {formato_clp(presupuesto.total)}")
 
                         # Buscar las facturas de compra del presupuesto.
                         compras_presupuesto = [
                             f for f in facturas_compra
                             if f.id_presupuesto == presupuesto.id_presupuesto
                         ]
+                        st.divider()
                         if compras_presupuesto:
-                            st.markdown("Facturas de compra:")
+                            st.markdown("**Facturas de compra asociadas:**")
 
                             for compra in compras_presupuesto:
                                 proveedor = proveedores_por_rut.get(
@@ -333,9 +358,11 @@ with tab_proyectos:
 
                                 st.write(
                                     f"- Factura #{compra.nro_documento} - "
-                                    f"{nombre_proveedor} - "
-                                    f"{formato_clp(compra.total)}"
+                                    f"{nombre_proveedor} - "    
                                 )
+                                st.write(f"Total neto: {formato_clp(compra.total_neto)}")
+                                st.write(f"IVA (19 %): {formato_clp(compra.iva)}")
+                                st.write(f"Total bruto: {formato_clp(compra.total)}")
                         else:
                             st.caption("Sin facturas de compra asociadas.")
 
@@ -350,9 +377,11 @@ with tab_proyectos:
                     for factura in facturas_proyecto:
                         st.write(
                             f"- Factura #{factura.nro_documento} — "
-                            f"{formato_clp(factura.total)} — "
-                            f"{factura.estado_pago}"
+                            f"{formato_clp(factura.total_neto)}"
                         )
+                        st.write(f"IVA (19 %): {formato_clp(factura.iva)}")
+                        st.write(f"Total bruto:{formato_clp(factura.total)}")
+                        st.write(f"**Estado de pago:** {factura.estado_pago}")
                 else:
                     st.caption("Sin facturas de venta asociadas.")
 
@@ -390,12 +419,23 @@ with tab_proyectos:
                     )
 
                     costo_edit = st.number_input(
-                        "Costo total estimado ($)",
+                        "Costo neto del proyecto ($)",
                         min_value=0,
                         value=int(proyecto.costo_total or 0),
                         step=10000,
                         key=f"costo_{proyecto.id_proyecto}",
                     )
+
+                    iva_edit = int(
+                        (Decimal(str(costo_edit)) * Decimal("0.19"))
+                        .quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                    )
+
+                    bruto_edit = costo_edit + iva_edit
+
+                    st.write(f"**Neto:** {formato_clp(costo_edit)}")
+                    st.write(f"**IVA (19 %):** {formato_clp(iva_edit)}")
+                    st.write(f"**Total bruto:** {formato_clp(bruto_edit)}")
 
                     guardar = st.form_submit_button(
                         "Guardar cambios"
