@@ -217,7 +217,7 @@ class FacturaVenta(Base):
     )
 
     proyecto: Mapped["Proyecto"] = relationship(
-        back_populates="factura_venta"
+        back_populates="facturas_venta"
     )
 
 # TABLA FACTURA_COMPRA
