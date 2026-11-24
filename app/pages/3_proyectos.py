@@ -270,13 +270,10 @@ with tab_proyectos:
                 if p.id_proyecto == proyecto.id_proyecto
             ]
 
-            factura_venta = next(
-                (
-                    f for f in facturas_venta
-                    if f.id_proyecto == proyecto.id_proyecto
-                ),
-                None,
-            )
+            facturas_proyecto = [
+                f for f in facturas_venta
+                if f.id_proyecto == proyecto.id_proyecto
+            ]
 
             with st.expander(
                 f"Proyecto #{proyecto.id_proyecto} — "
@@ -346,6 +343,18 @@ with tab_proyectos:
 
                 else:
                     st.write("Sin presupuestos asociados.")
+                
+                st.write("**Facturas de venta asociadas:**")
+
+                if facturas_proyecto:
+                    for factura in facturas_proyecto:
+                        st.write(
+                            f"- Factura #{factura.nro_documento} — "
+                            f"{formato_clp(factura.total)} — "
+                            f"{factura.estado_pago}"
+                        )
+                else:
+                    st.caption("Sin facturas de venta asociadas.")
 
                 # ------------------------------------------
                 # EDITAR PROYECTO
@@ -456,7 +465,7 @@ with tab_proyectos:
                     key=f"modo_eliminar_{proyecto.id_proyecto}",
                     help=(
                         "La segunda opción elimina el proyecto, sus "
-                        "presupuestos, la factura de venta asociada "
+                        "presupuestos, las factura de venta asociadas "
                         "y las facturas de compra vinculadas a esos "
                         "presupuestos."
                     ),
@@ -912,7 +921,6 @@ with tab_facturacion:
                                         total=total_venta,
                                         estado_pago=estado_pago_venta,
                                     )
-
                                     db.add(factura)
                                     db.commit()
 
