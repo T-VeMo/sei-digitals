@@ -817,27 +817,10 @@ with tab_facturacion:
     with tab_ventas:
         st.markdown("#### Registrar factura de venta")
 
-        # Un proyecto solo puede tener una factura de venta.
-        proyectos_facturados = {
-            factura.id_proyecto
-            for factura in facturas_venta
-        }
-
-        proyectos_disponibles_venta = [
-            proyecto
-            for proyecto in proyectos
-            if proyecto.id_proyecto not in proyectos_facturados
-        ]
-
         if not proyectos:
             st.warning(
                 "Primero debes registrar un proyecto en la "
                 "pestaña Gestión de Proyectos."
-            )
-        elif not proyectos_disponibles_venta:
-            st.info(
-                "Todos los proyectos registrados ya tienen "
-                "una factura de venta asociada."
             )
         else:
             with st.form("form_factura_venta", clear_on_submit=False):
@@ -852,7 +835,7 @@ with tab_facturacion:
                     "Proyecto asociado",
                     options=[
                         p.id_proyecto
-                        for p in proyectos_disponibles_venta
+                        for p in proyectos
                     ],
                     format_func=etiqueta_proyecto,
                 )
@@ -909,13 +892,6 @@ with tab_facturacion:
                                     proyecto_venta_id,
                                 )
 
-                                factura_proyecto = db.scalars(
-                                    select(FacturaVenta).where(
-                                        FacturaVenta.id_proyecto
-                                        == proyecto_venta_id
-                                    )
-                                ).first()
-
                                 if factura_existente:
                                     st.error(
                                         "Ya existe una factura de venta "
@@ -925,11 +901,6 @@ with tab_facturacion:
                                     st.error(
                                         "El proyecto seleccionado "
                                         "ya no existe."
-                                    )
-                                elif factura_proyecto:
-                                    st.error(
-                                        "El proyecto ya tiene una "
-                                        "factura de venta asociada."
                                     )
                                 else:
                                     factura = FacturaVenta(
