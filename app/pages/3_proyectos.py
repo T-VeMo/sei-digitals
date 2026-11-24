@@ -760,7 +760,7 @@ with tab_presupuesto:
 
             with st.expander(
                 f"Presupuesto #{presupuesto.id_presupuesto} — "
-                f"{formato_clp(presupuesto.total)}"
+                f"{formato_clp(presupuesto.subtotal_neto)}"
             ):
                 st.write(
                     f"**Proyecto asociado:** "
@@ -1003,7 +1003,7 @@ with tab_facturacion:
                 with st.expander(
                     f"Factura #{factura.nro_documento} — "
                     f"{nombre_cliente} — "
-                    f"{formato_clp(factura.total)}"
+                    f"{formato_clp(factura.total_neto)}"
                 ):
                     st.write(
                         f"**Proyecto asociado:** "
@@ -1325,7 +1325,7 @@ with tab_facturacion:
 
                 with st.expander(
                     f"Factura #{factura.nro_documento} — "
-                    f"{nombre_proveedor} — {formato_clp(factura.total)}"
+                    f"{nombre_proveedor} — {formato_clp(factura.total_neto)}"
                     
                 ):
                     st.write(f"**RUT proveedor:** {factura.rut_proveedor}")
