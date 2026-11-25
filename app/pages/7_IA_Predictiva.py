@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from datetime import date
 import streamlit as st
+import time
 
 load_dotenv()
 
@@ -21,7 +22,8 @@ Para preguntas del pronóstico usa la sección DATOS: los totales ya vienen calc
 # AQUÍ VA (NUEVO): la siguiente línea
 En DATOS está el contenido de las tablas tal cual. Cuando pidan facturas u otros registros, muéstralos con el nombre de la tabla, número de documento, fecha y monto, sin inventar nada.
 Si lo que piden no está en los datos, dilo tal cual.
-Si la pregunta no tiene que ver con el negocio, responde en una frase y vuelve al tema."""
+Si la pregunta no tiene que ver con el negocio, responde en una frase y vuelve al tema.
+Siempre entregar todo ordenado si es posible en una tabla necesariamente para mostrar datos o correos, numeros de teléfono, etc. No inventes datos, solo muestra lo que está en la base de datos."""
 
 @st.cache_resource
 def get_engine():
@@ -55,14 +57,19 @@ def cargar_historial():
 
 def entrenar_prophet(df):
     model = Prophet(
-        yearly_seasonality=True,
-        weekly_seasonality=True,
-        daily_seasonality=False,
+        yearly_seasonality=False, # Esto activa el patron de aprendizaje para un año
+        weekly_seasonality=False, # Esto activa el patron de aprendizaje para una semana
+        daily_seasonality=False,  # Esto activa el patron de aprendizaje para un día  
+        changepoint_prior_scale=0.01, # Esto controla las tendencias para que sean mas rigidas
+        interval_width=0.95, # Esto controla el rango de confianza del pronostico
     )
     model.fit(df)
 
     future = model.make_future_dataframe(periods=HORIZONTE_DIAS)
     forecast = model.predict(future)
+
+    for c in ("yhat", "yhat_lower", "yhat_upper"):
+        forecast[c] = forecast[c].clip(lower=0)
 
     # Solo las fechas futuras (después del último dato real)
     ultima_fecha_real = df["ds"].max()
@@ -151,6 +158,25 @@ def responder_con_ia(prompt):
     ]
     return responder_con_openrouter(prompt, contexto, historial)
 
+def graficar_pronostico(model, forecast_completo, df_hist):
+    ultima = df_hist["ds"].max()
+    fin = forecast_completo["ds"].max()
+
+    fig = model.plot(forecast_completo)
+    ax = fig.axes[0]
+
+    ax.axvspan(ultima, fin, color="#FFF4D6", alpha=0.6, zorder=0)
+    ax.axvline(ultima, color="#555555", linestyle="--", linewidth=1)
+    top = ax.get_ylim()[1]
+    ax.set_ylim(bottom=0, top=top)
+    ax.text(ultima, top * 0.98, "Último dato real  ", fontsize=9, color="#555", va="top", ha="right")
+    ax.text(ultima, top * 0.98, "  Predicción →", fontsize=9, color="#555", va="top", ha="left")
+
+    ax.set_title("Ventas reales y predicción a 30 días", fontsize=14, loc="left")
+    ax.set_xlabel("Fecha")
+    ax.set_ylabel("Ventas (CLP)")
+    return fig
+
 # --- INTERFAZ ---
 st.title("Módulo de IA Predictiva")
 st.markdown("Genera proyecciones financieras basadas en el historial de facturación de Supabase utilizando **Prophet**.")
@@ -181,17 +207,18 @@ if st.button("🚀 Generar Predicción con IA", type="primary"):
             st.error(f"Ocurrió un error al procesar el modelo: {e}")
 
 if st.session_state.forecast_completo is not None:
-    fig, ax = plt.subplots(figsize=(10, 5))
-    st.session_state.model.plot(st.session_state.forecast_completo, ax=ax)
-    ax.set_title("Pronóstico de Ventas — Prophet", fontsize=14)
-    ax.set_xlabel("Fecha")
-    ax.set_ylabel("Monto / Total")
+    fig = graficar_pronostico(st.session_state.model,
+st.session_state.forecast_completo,
+st.session_state.df_hist)
     st.pyplot(fig)
     plt.close(fig)
+    ultima = st.session_state.df_hist["ds"].max()
+    st.caption(f"Datos reales hasta: {ultima:%Y-%m-%d}")
+    if (pd.Timestamp.today() - ultima).days > 60:
+        st.warning("Los datos reales terminan hace más de 60 días: el pronóstico parte desde esa fecha, no desde hoy.")
 
 st.divider()
 st.subheader("Asistente IA - Consultas sobre el Pronostico")
-st.markdown("Preguntale al asistente sobre las tendencias o el flujo de ventas basado en el pronóstico generado por Prophet.")
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
