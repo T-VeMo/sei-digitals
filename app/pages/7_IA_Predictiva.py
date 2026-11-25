@@ -25,6 +25,7 @@ Si lo que piden no está en los datos, dilo tal cual.
 Si la pregunta no tiene que ver con el negocio, responde en una frase y vuelve al tema.
 Siempre entregar todo ordenado si es posible en una tabla necesariamente para mostrar datos o correos, numeros de teléfono, etc. No inventes datos, solo muestra lo que está en la base de datos."""
 
+
 @st.cache_resource
 def get_engine():
     database_url = os.getenv("DATABASE_URL")
@@ -57,17 +58,18 @@ def cargar_historial():
 
 def entrenar_prophet(df):
     model = Prophet(
-        yearly_seasonality=False, # Esto activa el patron de aprendizaje para un año
-        weekly_seasonality=False, # Esto activa el patron de aprendizaje para una semana
-        daily_seasonality=False,  # Esto activa el patron de aprendizaje para un día  
-        changepoint_prior_scale=0.01, # Esto controla las tendencias para que sean mas rigidas
-        interval_width=0.95, # Esto controla el rango de confianza del pronostico
+        yearly_seasonality=False,
+        weekly_seasonality=False,
+        daily_seasonality=False,
+        changepoint_prior_scale=0.01,
+        interval_width=0.95,
     )
     model.fit(df)
 
     future = model.make_future_dataframe(periods=HORIZONTE_DIAS)
     forecast = model.predict(future)
 
+    # una venta no puede ser negativa
     for c in ("yhat", "yhat_lower", "yhat_upper"):
         forecast[c] = forecast[c].clip(lower=0)
 
@@ -77,7 +79,9 @@ def entrenar_prophet(df):
 
     return model, forecast, forecast_futuro
 
+
 TABLAS_IA = ["cliente", "proveedor", "proyecto", "presupuesto", "factura_venta", "factura_compra"]
+
 
 @st.cache_data(ttl=60)
 def leer_tablas(limite=100):
@@ -90,6 +94,7 @@ def leer_tablas(limite=100):
             except Exception as e:
                 bloques.append(f"TABLA {tabla}: no se pudo leer ({e})")
     return "\n".join(bloques)
+
 
 def construir_contexto(futuro, historial):
     total = futuro["yhat"].sum()
@@ -119,6 +124,7 @@ Facturación real de los últimos meses:
 CONTENIDO DE LA BASE DE DATOS (tal cual):
 {leer_tablas()}"""
 
+
 def responder_con_openrouter(prompt, contexto, historial):
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
@@ -131,16 +137,21 @@ def responder_con_openrouter(prompt, contexto, historial):
     mensajes.append({"role": "user", "content": prompt})
 
     try:
+        inicio = time.perf_counter()
         resp = client.chat.completions.create(
             model="nvidia/nemotron-3.5-super-vl:free",
             messages=mensajes,
             max_tokens=2000,
         )
+        seg = time.perf_counter() - inicio
+        st.session_state.ultimo_tiempo = round(seg, 2)
         return resp.choices[0].message.content
     except Exception as e:
         return f"No pude consultar al modelo: {e}"
 
+
 def responder_con_ia(prompt):
+    st.session_state.ultimo_tiempo = None
     futuro = st.session_state.forecast_futuro
     hay_pronostico = (futuro is not None and not futuro.empty and st.session_state.df_hist is not None)
 
@@ -157,6 +168,11 @@ def responder_con_ia(prompt):
         if m["role"] in ("user", "assistant")
     ]
     return responder_con_openrouter(prompt, contexto, historial)
+
+
+def texto_seguro(texto):
+    return texto.replace("$", "\\$")
+
 
 def graficar_pronostico(model, forecast_completo, df_hist):
     ultima = df_hist["ds"].max()
@@ -176,6 +192,7 @@ def graficar_pronostico(model, forecast_completo, df_hist):
     ax.set_xlabel("Fecha")
     ax.set_ylabel("Ventas (CLP)")
     return fig
+
 
 # --- INTERFAZ ---
 st.title("Módulo de IA Predictiva")
@@ -207,9 +224,11 @@ if st.button("🚀 Generar Predicción con IA", type="primary"):
             st.error(f"Ocurrió un error al procesar el modelo: {e}")
 
 if st.session_state.forecast_completo is not None:
-    fig = graficar_pronostico(st.session_state.model,
-st.session_state.forecast_completo,
-st.session_state.df_hist)
+    fig = graficar_pronostico(
+        st.session_state.model,
+        st.session_state.forecast_completo,
+        st.session_state.df_hist,
+    )
     st.pyplot(fig)
     plt.close(fig)
     ultima = st.session_state.df_hist["ds"].max()
@@ -222,7 +241,7 @@ st.subheader("Asistente IA - Consultas sobre el Pronostico")
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        st.markdown(texto_seguro(message["content"]))
 
 if prompt := st.chat_input("Ej: ¿Cómo se ve el flujo de ventas en los próximos 5 días?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -232,6 +251,9 @@ if prompt := st.chat_input("Ej: ¿Cómo se ve el flujo de ventas en los próximo
     with st.chat_message("assistant"):
         with st.spinner("Analizando el pronóstico..."):
             respuesta = responder_con_ia(prompt)
-        st.markdown(respuesta)
+        st.markdown(texto_seguro(respuesta))
+        t = st.session_state.get("ultimo_tiempo")
+        if t is not None:
+            st.caption(f"Tiempo de respuesta: {t} seg")
 
     st.session_state.messages.append({"role": "assistant", "content": respuesta})
